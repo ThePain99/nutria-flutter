@@ -16,7 +16,7 @@ class _ConversationPageState extends State<ConversationPage> {
   final List<Map<String, String>> _visibleMessages = [];
   bool _isLoading = false;
   int? chatId;
-  int chatCounter = 1;
+  int chatCounter = 1; // Esta variable se actualizará correctamente.
 
   final ChatService _chatService = ChatService();
 
@@ -30,8 +30,14 @@ class _ConversationPageState extends State<ConversationPage> {
     setState(() {
       _isLoading = true;
     });
+
+    // Obtén la cantidad de chats existentes para el paciente
+    List<dynamic> existingChats = await _chatService.getChatsByPatientId(Environment.patientId);
+
+    // Determina el número secuencial basado en la cantidad de chats existentes
+    chatCounter = existingChats.length + 1;
+
     final chatName = 'Conversación $chatCounter';
-    chatCounter++;
     chatId = await _chatService.createChat(chatName, Environment.patientId);
 
     if (chatId != null) {
@@ -84,7 +90,7 @@ class _ConversationPageState extends State<ConversationPage> {
         body: jsonEncode({
           'model': 'gpt-3.5-turbo',
           'messages': [
-            {'role': 'system', 'content': 'Eres un asistente de nutrición.'},
+            {'role': 'system', 'content': _getEnhancedSystemPrompt()},
             {'role': 'user', 'content': message}
           ],
           'max_tokens': 1024, // Mayor cantidad de tokens
@@ -100,6 +106,14 @@ class _ConversationPageState extends State<ConversationPage> {
     } catch (e) {
       return 'Error al conectarse con OpenAI.';
     }
+  }
+
+  String _getEnhancedSystemPrompt() {
+    return """
+Eres un asistente de nutrición muy avanzado que se preocupa profundamente por el bienestar físico y mental del usuario. Siempre brindas recomendaciones detalladas y personalizadas basadas en hábitos saludables, equilibrio nutricional y estilo de vida. 
+Tus respuestas son claras y directas, pero a la vez completas, asegurando que el usuario reciba toda la información necesaria para hacer elecciones alimenticias responsables y sostenibles. 
+Tus recomendaciones están basadas en la ciencia más actualizada y consideras factores como alergias, preferencias alimentarias, necesidades nutricionales específicas y objetivos de salud. Siempre motivas al usuario a mejorar su bienestar físico y emocional a largo plazo, recordándoles la importancia de mantenerse activos y de llevar una vida equilibrada tanto en lo físico como en lo mental.
+""";
   }
 
   @override
@@ -119,14 +133,44 @@ class _ConversationPageState extends State<ConversationPage> {
                 final isUserMessage = message['role'] == 'user';
                 return Align(
                   alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: isUserMessage ? Colors.green[100] : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!isUserMessage) ...[
+                          // Icono de la IA (OpenAI)
+                          CircleAvatar(
+                            backgroundImage: AssetImage('assets/ChatGPT_Logo.png'),
+                            radius: 15,
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isUserMessage ? Colors.green[100] : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              message['content']!,
+                              style: const TextStyle(fontSize: 16),
+                              softWrap: true, // Permite que el texto se ajuste al tamaño de pantalla
+                            ),
+                          ),
+                        ),
+                        if (isUserMessage) ...[
+                          const SizedBox(width: 8),
+                          // Icono del usuario
+                          CircleAvatar(
+                            backgroundImage: AssetImage('assets/avatar.jpg'),
+                            radius: 15,
+                          ),
+                        ],
+                      ],
                     ),
-                    child: Text(message['content']!),
                   ),
                 );
               },

@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/themes/color.dart';
+import 'package:nutriapp/modules/nutritionist/informaton_patient/chatsSavedHistorialPatient.dart';
+import 'package:nutriapp/variables.dart';
 
 import '../chat/conversation.dart';
 
@@ -11,6 +16,15 @@ class ChatSavedPatientPage extends StatefulWidget {
 }
 
 class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
+  late Future<List<dynamic>> _chatsFuture;
+  final ChatService _chatService = ChatService();
+
+  @override
+  void initState() {
+    super.initState();
+    _chatsFuture = _chatService.getChatsByPatientId(Environment.patientId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,6 +40,26 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
             const SizedBox(height: 20),
             _buildNewConversationButton(),
             const SizedBox(height: 20),
+            _buildSectionTitle("Conversaciones guardadas"),
+            const SizedBox(height: 20),
+            FutureBuilder<List<dynamic>>(
+              future: _chatsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar los chats.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No hay conversaciones guardadas.'));
+                } else {
+                  List<dynamic> chats = snapshot.data!;
+                  chats.sort((a, b) => b['id'].compareTo(a['id'])); // Orden descendente por chatId
+                  return Column(
+                    children: chats.map((chat) => _buildChatItem(chat)).toList(),
+                  );
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -109,7 +143,45 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
     );
   }
 
-
+  Widget _buildChatItem(dynamic chat) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatSavedHistorialPatientPage(chatId: chat['id']),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          side: BorderSide(color: Colors.green, width: 2.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              ClipOval(
+                child: Image.asset(
+                  'assets/avatar.jpg',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                // Asegúrate de decodificar correctamente el nombre del chat
+                child: _buildText(utf8.decode(chat['chatName'].runes.toList()), Colors.black, 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildText(String text, Color color, double fontSize, [FontWeight fontWeight = FontWeight.normal]) {
     return Text(

@@ -77,4 +77,30 @@ class ChatService {
       debugPrint('Exception occurred while creating conversation: $e');
     }
   }
+
+  Future<List<dynamic>> getConversationsByChatId(int chatId) async {
+    // Actualizamos la URL para reflejar la ruta correcta
+    final url = '$baseUrl/conversations/$chatId';
+    print('Requesting conversations for chatId: $chatId from URL: $url'); // Añade esto para depurar
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'accept': 'application/hal+json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        debugPrint('Error al obtener las conversaciones: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Exception occurred while fetching conversations: $e');
+      return [];
+    }
+  }
+
 }
