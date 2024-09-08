@@ -4,7 +4,6 @@ import 'package:nutriapp/modules/nutritionist/informaton_patient/chatsSavedPatie
 import 'package:nutriapp/modules/nutritionist/informaton_patient/favoriteFoodPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/graphicsPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/profilePatient.dart';
-import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionist.dart';
 import 'package:nutriapp/themes/color.dart';
 
 class HomeNutricionistPage extends StatefulWidget
@@ -23,26 +22,21 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
         title: const Text("Inicio Nutricionista"),
         backgroundColor: verdeMain,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildPatientInfo(),
-                  const SizedBox(height: 20),
-                  _buildGreenText("Lista de usuarios"),
-                  _buildUser("Dan Mitchel", "UD93K)=/"),
-                  _buildUser("Jorge Luna", "UD123)=/"),
-                ],
-              ),
-            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildPatientInfo(),
+              const SizedBox(height: 20),
+              _buildGreenText("Lista de usuarios"),
+              _buildUser("Dan Mitchel", "UD93K)=/"),
+              _buildUser("Jorge Luna", "UD123)=/"),
+            ],
           ),
-          const SideBarNutricionist(), // Aquí agregamos el sidebar
-        ],
+        ),
       ),
     );
   }

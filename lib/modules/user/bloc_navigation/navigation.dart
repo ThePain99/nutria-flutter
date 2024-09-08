@@ -11,8 +11,6 @@ import 'package:nutriapp/modules/user/politics/politics.dart';
 import 'package:nutriapp/modules/user/profile/profileWithoutEdit.dart';
 
 enum NavigationEvents {
-  //añadir mas vistas
-
   HomeClickedEvent,
   ProfileClickedEvent,
   GraphicsClickedEvent,
@@ -29,7 +27,7 @@ enum NavigationEvents {
 mixin NavigationStates {}
 
 class NavigationBloc extends Bloc<NavigationEvents, NavigationStates> {
-  NavigationBloc() : super(HomePage() /* cambiar por la vista de home*/) {
+  NavigationBloc() : super(HomePage()) {
     on<NavigationEvents>((event, emit) {
       switch (event) {
         case NavigationEvents.HomeClickedEvent:
@@ -62,7 +60,7 @@ class NavigationBloc extends Bloc<NavigationEvents, NavigationStates> {
         case NavigationEvents.ChangeAccountClickedEvent:
           emit(ChangeAccountPage());
           break;
-        case NavigationEvents.LogoutClickedEvent: //cambiar
+        case NavigationEvents.LogoutClickedEvent:
           emit(PoliticsPage());
           break;
       }

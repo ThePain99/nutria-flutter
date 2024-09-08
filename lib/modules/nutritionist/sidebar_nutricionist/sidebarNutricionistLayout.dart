@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:nutriapp/modules/nutritionist/bloc_navigation_nutricionist/navigation.dart';
-import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionist.dart';
+import '../bloc_navigation_nutricionist/navigation.dart';
+import 'sidebarNutricionist.dart';
 
 class SideBarNutricionistlayout extends StatelessWidget {
   const SideBarNutricionistlayout({super.key});
@@ -19,7 +18,7 @@ class SideBarNutricionistlayout extends StatelessWidget {
                 return navigationState as Widget;
               },
             ),
-            SideBarNutricionist(),
+            const SideBarNutricionist(),
           ],
         ),
       ),

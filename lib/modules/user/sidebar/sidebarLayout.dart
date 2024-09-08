@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nutriapp/modules/user/sidebar/sidebar.dart';
-
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
 
 class SideBarlayout extends StatelessWidget {
@@ -19,7 +18,7 @@ class SideBarlayout extends StatelessWidget {
                 return navigationState as Widget;
               },
             ),
-            SideBar(),
+            const SideBar(),
           ],
         ),
       ),

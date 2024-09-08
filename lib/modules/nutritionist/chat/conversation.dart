@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:nutriapp/services/chat_service.dart';  // Servicio del chat
+import 'package:nutriapp/variables.dart';  // Variables de entorno
 
 class ConversationPage extends StatefulWidget {
   const ConversationPage({Key? key}) : super(key: key);
@@ -14,21 +16,59 @@ class _ConversationPageState extends State<ConversationPage> {
   final List<Map<String, String>> _visibleMessages = [];
   final List<Map<String, String>> _allMessages = [];
   bool _isLoading = false;
+  int? chatId;  // ID del chat en uso
+  int chatCounter = 1;
 
-  final String openAIKey = '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';
+  final ChatService _chatService = ChatService();  // Servicio de chat
 
   @override
   void initState() {
     super.initState();
+    _initializeChat();  // Iniciar la conversación
+  }
+
+  // Método para inicializar el chat
+  Future<void> _initializeChat() async {
+    // Intentar obtener chats previos
+    List<dynamic> chats = await _chatService.getChatsByPatientId(Environment.patientId);
+
+    // Si hay chats previos, usar el último chat
+    if (chats.isNotEmpty) {
+      setState(() {
+        chatId = chats.last['id'];  // Asigna el último chat disponible
+        chatCounter = chats.length + 1;  // Actualiza el contador de chats
+      });
+    } else {
+      await _createChat();  // Si no hay chats, crea uno nuevo
+    }
     _allMessages.addAll(_buildInitialMessages());
   }
 
+  // Crear un nuevo chat si no existe
+  Future<void> _createChat() async {
+    final chatName = 'Conversación $chatCounter';
+    chatCounter++;
+    chatId = await _chatService.createChat(chatName);
+
+    if (chatId == null) {
+      debugPrint('Error al crear el chat');
+    } else {
+      debugPrint('Chat creado con ID: $chatId');
+    }
+  }
+
+  // Lógica para enviar un mensaje
   Future<void> _sendMessage(String message) async {
     setState(() {
       _visibleMessages.add({'role': 'user', 'content': message});
       _allMessages.add({'role': 'user', 'content': message});
-      _isLoading = true; // Deshabilitar el input mientras la IA responde
+      _isLoading = true;  // Deshabilitar input mientras responde la IA
     });
+
+    // Crear la conversación con el mensaje del usuario
+    if (chatId != null) {
+      await _chatService.createConversation(message, chatId!, false);
+    }
 
     _messageController.clear();
     final response = await _fetchOpenAIResponse(_allMessages);
@@ -37,18 +77,24 @@ class _ConversationPageState extends State<ConversationPage> {
       setState(() {
         _visibleMessages.add({'role': 'assistant', 'content': response});
         _allMessages.add({'role': 'assistant', 'content': response});
-        _isLoading = false; // Rehabilitar el input después de que la IA responda
+        _isLoading = false;  // Habilitar input tras respuesta de IA
       });
+
+      // Guardar la conversación de la IA
+      if (chatId != null) {
+        await _chatService.createConversation(response, chatId!, true);
+      }
     }
   }
 
+  // Obtener la respuesta de OpenAI
   Future<String?> _fetchOpenAIResponse(List<Map<String, String>> messages) async {
-    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    const apiUrl = Environment.openAIUrl;
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          'Authorization': 'Bearer $openAIKey',
+          'Authorization': 'Bearer ${Environment.openAIKey}',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
@@ -69,11 +115,12 @@ class _ConversationPageState extends State<ConversationPage> {
     }
   }
 
+  // Mensaje inicial del sistema
   List<Map<String, String>> _buildInitialMessages() {
     return [
       {
         'role': 'system',
-        'content': 'Actúa como un nutricionista profesional. Responde de manera precisa y personalizada basándote en la información proporcionada. Realiza preguntas sobre hábitos alimenticios, estilo de vida, nivel de actividad física y metas de bienestar. Luego, proporciona recomendaciones dietéticas y de ejercicio personalizadas. Mantén el seguimiento de la conversación y ajusta las recomendaciones según la nueva información proporcionada por el usuario.'
+        'content': 'Actúa como un nutricionista profesional. Responde de manera precisa y personalizada basándote en la información proporcionada.'
       }
     ];
   }
@@ -121,7 +168,7 @@ class _ConversationPageState extends State<ConversationPage> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    enabled: !_isLoading, // Deshabilitar el input cuando esté cargando
+                    enabled: !_isLoading,
                     decoration: const InputDecoration(
                       hintText: 'Escribe un mensaje...',
                       border: OutlineInputBorder(),
