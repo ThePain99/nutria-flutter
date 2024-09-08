@@ -125,6 +125,24 @@ class _SideBarState extends State<SideBar>
                 .add(NavigationEvents.ProfileClickedEvent);
           },
         ),
+        MenuItem(
+          icon: Icons.chat,
+          title: "Crear Chat",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.ChatNutrIAClickedEvent);
+          },
+        ),
+        MenuItem(
+          icon: Icons.chat,
+          title: "Historial de Chats",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.SavedChatsClickedEvent);
+          },
+        ),
       ],
     );
   }
