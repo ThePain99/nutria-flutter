@@ -24,48 +24,50 @@ class _ConversationPageState extends State<ConversationPage> {
   @override
   void initState() {
     super.initState();
-    _initializeChat();  // Iniciar la conversación
+    _initializeChat(); // Inicia el proceso de chat
   }
 
-  // Método para inicializar el chat
+  // Inicializa el chat, obteniendo los chats previos del paciente
   Future<void> _initializeChat() async {
-    // Intentar obtener chats previos
+    print("Initializing chat...");
     List<dynamic> chats = await _chatService.getChatsByPatientId(Environment.patientId);
 
-    // Si hay chats previos, usar el último chat
     if (chats.isNotEmpty) {
       setState(() {
-        chatId = chats.last['id'];  // Asigna el último chat disponible
-        chatCounter = chats.length + 1;  // Actualiza el contador de chats
+        chatId = chats.last['id']; // Usa el último chat disponible
+        chatCounter = chats.length + 1;
+        print("Existing chat found with ID: $chatId");
       });
     } else {
-      await _createChat();  // Si no hay chats, crea uno nuevo
+      await _createChat();
     }
+
     _allMessages.addAll(_buildInitialMessages());
   }
 
-  // Crear un nuevo chat si no existe
+  // Crear un nuevo chat si no existe uno previo
   Future<void> _createChat() async {
     final chatName = 'Conversación $chatCounter';
     chatCounter++;
     chatId = await _chatService.createChat(chatName);
 
     if (chatId == null) {
-      debugPrint('Error al crear el chat');
+      print('Error creating new chat');
     } else {
-      debugPrint('Chat creado con ID: $chatId');
+      print('New chat created with ID: $chatId');
     }
   }
 
-  // Lógica para enviar un mensaje
+  // Enviar un mensaje
   Future<void> _sendMessage(String message) async {
     setState(() {
       _visibleMessages.add({'role': 'user', 'content': message});
       _allMessages.add({'role': 'user', 'content': message});
-      _isLoading = true;  // Deshabilitar input mientras responde la IA
+      _isLoading = true;
+      print('User message: $message');
     });
 
-    // Crear la conversación con el mensaje del usuario
+    // Crear conversación con el mensaje del usuario
     if (chatId != null) {
       await _chatService.createConversation(message, chatId!, false);
     }
@@ -77,7 +79,8 @@ class _ConversationPageState extends State<ConversationPage> {
       setState(() {
         _visibleMessages.add({'role': 'assistant', 'content': response});
         _allMessages.add({'role': 'assistant', 'content': response});
-        _isLoading = false;  // Habilitar input tras respuesta de IA
+        print('AI response: $response');
+        _isLoading = false;
       });
 
       // Guardar la conversación de la IA
@@ -90,6 +93,8 @@ class _ConversationPageState extends State<ConversationPage> {
   // Obtener la respuesta de OpenAI
   Future<String?> _fetchOpenAIResponse(List<Map<String, String>> messages) async {
     const apiUrl = Environment.openAIUrl;
+    print("Fetching response from OpenAI...");
+
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -106,11 +111,14 @@ class _ConversationPageState extends State<ConversationPage> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        print('OpenAI response received: ${data['choices'][0]['message']['content']}');
         return data['choices'][0]['message']['content'].trim();
       } else {
+        print('Error fetching OpenAI response: ${response.statusCode}');
         return 'Error al conectar con OpenAI.';
       }
-    } catch (error) {
+    } catch (e) {
+      print('Exception while fetching OpenAI response: $e');
       return 'Error al conectarse con OpenAI.';
     }
   }
@@ -120,7 +128,7 @@ class _ConversationPageState extends State<ConversationPage> {
     return [
       {
         'role': 'system',
-        'content': 'Actúa como un nutricionista profesional. Responde de manera precisa y personalizada basándote en la información proporcionada.'
+        'content': 'Actúa como un nutricionista profesional. Responde de manera precisa y personalizada.'
       }
     ];
   }
