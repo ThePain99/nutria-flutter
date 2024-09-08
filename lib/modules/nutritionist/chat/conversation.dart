@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:nutriapp/services/chat_service.dart';  // Servicio del chat
-import 'package:nutriapp/variables.dart';  // Variables de entorno
+import 'package:nutriapp/services/chat_service.dart';
+import 'package:nutriapp/variables.dart';
 
 class ConversationPage extends StatefulWidget {
   const ConversationPage({Key? key}) : super(key: key);
@@ -14,87 +14,66 @@ class ConversationPage extends StatefulWidget {
 class _ConversationPageState extends State<ConversationPage> {
   final TextEditingController _messageController = TextEditingController();
   final List<Map<String, String>> _visibleMessages = [];
-  final List<Map<String, String>> _allMessages = [];
   bool _isLoading = false;
-  int? chatId;  // ID del chat en uso
+  int? chatId;
   int chatCounter = 1;
 
-  final ChatService _chatService = ChatService();  // Servicio de chat
+  final ChatService _chatService = ChatService();
 
   @override
   void initState() {
     super.initState();
-    _initializeChat(); // Inicia el proceso de chat
+    _initializeChat(); // Inicia el chat de manera secuencial.
   }
 
-  // Inicializa el chat, obteniendo los chats previos del paciente
   Future<void> _initializeChat() async {
-    print("Initializing chat...");
-    List<dynamic> chats = await _chatService.getChatsByPatientId(Environment.patientId);
-
-    if (chats.isNotEmpty) {
-      setState(() {
-        chatId = chats.last['id']; // Usa el último chat disponible
-        chatCounter = chats.length + 1;
-        print("Existing chat found with ID: $chatId");
-      });
-    } else {
-      await _createChat();
-    }
-
-    _allMessages.addAll(_buildInitialMessages());
-  }
-
-  // Crear un nuevo chat si no existe uno previo
-  Future<void> _createChat() async {
+    setState(() {
+      _isLoading = true;
+    });
     final chatName = 'Conversación $chatCounter';
     chatCounter++;
-    chatId = await _chatService.createChat(chatName);
+    chatId = await _chatService.createChat(chatName, Environment.patientId);
 
-    if (chatId == null) {
-      print('Error creating new chat');
+    if (chatId != null) {
+      debugPrint('Nuevo chat creado con ID: $chatId');
     } else {
-      print('New chat created with ID: $chatId');
+      debugPrint('Error creando nuevo chat');
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
-  // Enviar un mensaje
   Future<void> _sendMessage(String message) async {
+    if (chatId == null) return;
+
     setState(() {
       _visibleMessages.add({'role': 'user', 'content': message});
-      _allMessages.add({'role': 'user', 'content': message});
       _isLoading = true;
-      print('User message: $message');
     });
 
-    // Crear conversación con el mensaje del usuario
-    if (chatId != null) {
-      await _chatService.createConversation(message, chatId!, false);
-    }
-
+    await _chatService.createConversation(message, chatId!, false);
     _messageController.clear();
-    final response = await _fetchOpenAIResponse(_allMessages);
+
+    final response = await _fetchOpenAIResponse(message);
 
     if (response != null) {
       setState(() {
         _visibleMessages.add({'role': 'assistant', 'content': response});
-        _allMessages.add({'role': 'assistant', 'content': response});
-        print('AI response: $response');
         _isLoading = false;
       });
 
-      // Guardar la conversación de la IA
-      if (chatId != null) {
-        await _chatService.createConversation(response, chatId!, true);
-      }
+      await _chatService.createConversation(response, chatId!, true);
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  // Obtener la respuesta de OpenAI
-  Future<String?> _fetchOpenAIResponse(List<Map<String, String>> messages) async {
-    const apiUrl = Environment.openAIUrl;
-    print("Fetching response from OpenAI...");
-
+  Future<String?> _fetchOpenAIResponse(String message) async {
+    final apiUrl = Environment.openAIUrl;
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -104,33 +83,23 @@ class _ConversationPageState extends State<ConversationPage> {
         },
         body: jsonEncode({
           'model': 'gpt-3.5-turbo',
-          'messages': messages,
-          'max_tokens': 150,
+          'messages': [
+            {'role': 'system', 'content': 'Eres un asistente de nutrición.'},
+            {'role': 'user', 'content': message}
+          ],
+          'max_tokens': 1024, // Mayor cantidad de tokens
         }),
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
-        print('OpenAI response received: ${data['choices'][0]['message']['content']}');
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         return data['choices'][0]['message']['content'].trim();
       } else {
-        print('Error fetching OpenAI response: ${response.statusCode}');
         return 'Error al conectar con OpenAI.';
       }
     } catch (e) {
-      print('Exception while fetching OpenAI response: $e');
       return 'Error al conectarse con OpenAI.';
     }
-  }
-
-  // Mensaje inicial del sistema
-  List<Map<String, String>> _buildInitialMessages() {
-    return [
-      {
-        'role': 'system',
-        'content': 'Actúa como un nutricionista profesional. Responde de manera precisa y personalizada.'
-      }
-    ];
   }
 
   @override
@@ -148,7 +117,6 @@ class _ConversationPageState extends State<ConversationPage> {
               itemBuilder: (context, index) {
                 final message = _visibleMessages[index];
                 final isUserMessage = message['role'] == 'user';
-                final text = message['content']!;
                 return Align(
                   alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
@@ -158,7 +126,7 @@ class _ConversationPageState extends State<ConversationPage> {
                       color: isUserMessage ? Colors.green[100] : Colors.grey[200],
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(text),
+                    child: Text(message['content']!),
                   ),
                 );
               },

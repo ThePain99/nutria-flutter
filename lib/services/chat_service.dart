@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:nutriapp/variables.dart';
 
 class ChatService {
-  // Obtener chats del paciente
-  Future<List<dynamic>> getChatsByPatientId(int patientId) async {
-    final url = '${Environment.baseUrl}/chats/$patientId';
-    print("Fetching chats from: $url");
+  final String baseUrl = Environment.baseUrl;
 
+  Future<List<dynamic>> getChatsByPatientId(int patientId) async {
+    final url = '$baseUrl/chats/$patientId';
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -18,23 +17,19 @@ class ChatService {
       );
 
       if (response.statusCode == 200) {
-        print("Chats fetched successfully.");
         return jsonDecode(response.body);
       } else {
-        print('Error al obtener los chats: ${response.statusCode}');
+        debugPrint('Error al obtener los chats: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('Exception occurred while fetching chats: $e');
+      debugPrint('Exception occurred while fetching chats: $e');
       return [];
     }
   }
 
-  // Crear un nuevo chat
-  Future<int?> createChat(String chatName) async {
-    final url = '${Environment.baseUrl}/createChat';
-    print("Creating chat with name: $chatName");
-
+  Future<int?> createChat(String chatName, int patientId) async {
+    final url = '$baseUrl/createChat';
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -43,29 +38,25 @@ class ChatService {
         },
         body: jsonEncode({
           'chatName': chatName,
-          'patientId': Environment.patientId,
+          'patientId': patientId,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("Chat created successfully with ID: ${data['id']}");
-        return data['id']; // Devuelve el ID del chat
+        return data['id'];
       } else {
-        print('Error al crear el chat: ${response.statusCode}');
+        debugPrint('Error al crear el chat: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Exception occurred while creating chat: $e');
+      debugPrint('Exception occurred while creating chat: $e');
       return null;
     }
   }
 
-  // Crear una nueva conversación
   Future<void> createConversation(String text, int chatId, bool isBot) async {
-    final url = '${Environment.baseUrl}/createConversation';
-    print("Creating conversation in chat ID $chatId with text: $text");
-
+    final url = '$baseUrl/createConversation';
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -79,13 +70,11 @@ class ChatService {
         }),
       );
 
-      if (response.statusCode == 200) {
-        print("Conversation created successfully.");
-      } else {
-        print('Error al crear la conversación: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        debugPrint('Error al crear la conversación: ${response.statusCode}');
       }
     } catch (e) {
-      print('Exception occurred while creating conversation: $e');
+      debugPrint('Exception occurred while creating conversation: $e');
     }
   }
 }
