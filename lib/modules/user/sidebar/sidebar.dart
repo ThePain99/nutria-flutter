@@ -66,12 +66,13 @@ class _SideBarState extends State<SideBar>
             children: <Widget>[
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   color: Colors.green,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const SizedBox(height: 50),
-                      buildMenuItems(context),
+                      _buildMenuItems(context),
                     ],
                   ),
                 ),
@@ -104,8 +105,9 @@ class _SideBarState extends State<SideBar>
     );
   }
 
-  Widget buildMenuItems(BuildContext context) {
+  Widget _buildMenuItems(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         MenuItem(
           icon: Icons.home,
@@ -116,6 +118,7 @@ class _SideBarState extends State<SideBar>
                 .add(NavigationEvents.HomeClickedEvent);
           },
         ),
+        const SizedBox(height: 10),
         MenuItem(
           icon: Icons.person,
           title: "Perfil de Usuario",
@@ -125,18 +128,19 @@ class _SideBarState extends State<SideBar>
                 .add(NavigationEvents.ProfileClickedEvent);
           },
         ),
+        const SizedBox(height: 10),
         MenuItem(
-          icon: Icons.chat,
-          title: "Crear Chat",
+          icon: Icons.chat_bubble_outline,
+          title: "Iniciar nueva conversación",
           onTap: () {
             onIconPressed();
-            BlocProvider.of<NavigationBloc>(context)
-                .add(NavigationEvents.ChatNutrIAClickedEvent);
+            BlocProvider.of<NavigationBloc>(context).add(NavigationEvents.ChatNutrIAClickedEvent);
           },
         ),
+        const SizedBox(height: 10),
         MenuItem(
-          icon: Icons.chat,
-          title: "Historial de Chats",
+          icon: Icons.history,
+          title: "Ver historial de conversaciones",
           onTap: () {
             onIconPressed();
             BlocProvider.of<NavigationBloc>(context)

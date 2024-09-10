@@ -46,7 +46,7 @@ class NavigationBloc extends Bloc<NavigationEvents, NavigationStates> {
           emit(ChatSavedPage());
           break;
         case NavigationEvents.ChatNutrIAClickedEvent:
-          emit(ChatIAPage());
+          emit(ChatIAPage() as NavigationStates);
           break;
         case NavigationEvents.CodeFriendClickedEvent:
           emit(CodeFriendPage());

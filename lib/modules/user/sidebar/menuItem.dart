@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final void Function() onTap;
+  final Function onTap;
 
   const MenuItem({
     Key? key,
@@ -14,20 +14,26 @@ class MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return InkWell(
+      onTap: () => onTap(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Row(
           children: <Widget>[
-            Icon(icon, color: Colors.white, size: 30),
-            const SizedBox(width: 20),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w300,
-                fontSize: 26,
-                color: Colors.white,
+            Icon(
+              icon,
+              size: 30,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 16),
+            Expanded( // Esto ajusta el texto al espacio disponible
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis, // Esto trunca el texto si es demasiado largo
               ),
             ),
           ],
