@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:nutriapp/variables.dart';
 
 class ChatService {
-  final String baseUrl = Environment.baseUrl;
+  final String baseUrl = Environment.baseUrl+'message';
 
   Future<List<dynamic>> getChatsByPatientId(int patientId) async {
     final url = '$baseUrl/chats/$patientId';

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionist.dart';
+import 'package:nutriapp/modules/user/sidebar/sidebar.dart';
+import 'package:nutriapp/modules/user/sidebar/sidebarLayout.dart';
 import 'package:nutriapp/themes/color.dart';
+import '../../services/loginService.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,99 +18,22 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool rememberUser = false;
-
-  void _showCamposBlancos(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // El fondo oscuro detrás del diálogo se maneja automáticamente por Flutter
-        return AlertDialog(
-          title: Text(
-            'AVISO',
-            style: TextStyle(color: verdeMain, fontWeight: FontWeight.bold),
-          ),
-          content: Text('Complete todos los campos para continuar.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Aceptar',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el AlertDialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showCorreoNoCorrespondido(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // El fondo oscuro detrás del diálogo se maneja automáticamente por Flutter
-        return AlertDialog(
-          title: Text(
-            'AVISO',
-            style: TextStyle(color: verdeMain, fontWeight: FontWeight.bold),
-          ),
-          content: Text('El correo ingresado no corresponde a ningún usuario.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Aceptar',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el AlertDialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showContrasenaIncorrecta(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // El fondo oscuro detrás del diálogo se maneja automáticamente por Flutter
-        return AlertDialog(
-          title: Text(
-            'AVISO',
-            style: TextStyle(color: verdeMain, fontWeight: FontWeight.bold),
-          ),
-          content: Text('La contraseña ingresada es incorrecta.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Aceptar',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el AlertDialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  bool isPasswordVisible = false; // Control para mostrar/ocultar contraseña
 
   @override
   Widget build(BuildContext context) {
     myColor = Theme.of(context).primaryColor;
     mediaSize = MediaQuery.of(context).size;
     return Container(
-      decoration: const BoxDecoration(
-        color: verdeMain,
-      ),
+      decoration: const BoxDecoration(color: verdeMain),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(children: [
-          Positioned(top: 0, child: _buildTop()),
-          Positioned(bottom: 0, child: _buildBottom()),
-        ]),
+        body: Stack(
+          children: [
+            Positioned(top: 0, child: _buildTop()),
+            Positioned(bottom: 0, child: _buildBottom()),
+          ],
+        ),
       ),
     );
   }
@@ -118,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Transform.scale(
-            scale: 0.6, // Reducir el tamaño de la imagen al 50%
+            scale: 0.6,
             child: Image.asset('assets/nutria_init.png'),
           ),
         ],
@@ -131,10 +58,11 @@ class _LoginPageState extends State<LoginPage> {
       width: mediaSize.width,
       child: Card(
         shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        )),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: _buildForm(),
@@ -176,13 +104,26 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildInputField(TextEditingController controller,
-      {isPassword = false}) {
+      {bool isPassword = false}) {
     return TextField(
       controller: controller,
+      obscureText: isPassword && !isPasswordVisible,
       decoration: InputDecoration(
-        suffixIcon: isPassword ? Icon(Icons.remove_red_eye) : Icon(Icons.done),
+        suffixIcon: isPassword
+            ? IconButton(
+          icon: Icon(
+            isPasswordVisible
+                ? Icons.visibility
+                : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              isPasswordVisible = !isPasswordVisible;
+            });
+          },
+        )
+            : const Icon(Icons.done),
       ),
-      obscureText: isPassword,
     );
   }
 
@@ -190,18 +131,47 @@ class _LoginPageState extends State<LoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(onPressed: () {}, child: _buildGreyText("Sign up here <3")),
+        TextButton(onPressed: () {}, child: _buildGreyText("Sign up here")),
         TextButton(
-            onPressed: () {}, child: _buildGreyText("I forgot my password"))
+            onPressed: () {},
+            child: _buildGreyText("I forgot my password"))
       ],
     );
   }
 
   Widget _buildLoginButton() {
     return ElevatedButton(
-      onPressed: () {
-        debugPrint("Email : ${emailController.text}");
-        debugPrint("Password : ${passwordController.text}");
+      onPressed: () async {
+        String email = emailController.text;
+        String password = passwordController.text;
+
+        if (email.isEmpty || password.isEmpty) {
+          _showErrorDialog(
+              context, 'AVISO', 'Complete todos los campos para continuar.');
+        } else {
+          final loginService = LoginService();
+          final response = await loginService.login(email, password);
+
+          if (response != null) {
+            String role = response['role'] ?? '';
+            if (role == 'nutricionista') {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                    builder: (context) => SideBarNutricionist()),
+              );
+            } else if (role == 'paciente') {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => SideBarlayout()),
+              );
+            } else {
+              _showErrorDialog(context, 'AVISO',
+                  'El correo ingresado no corresponde a ningún usuario.');
+            }
+          } else {
+            _showErrorDialog(context, 'AVISO',
+                'El correo o la contraseña son incorrectos.');
+          }
+        }
       },
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),
@@ -213,6 +183,33 @@ class _LoginPageState extends State<LoginPage> {
         "LOGIN",
         style: TextStyle(color: verdeMain),
       ),
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(color: verdeMain, fontWeight: FontWeight.bold),
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'Aceptar',
+                style:
+                TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

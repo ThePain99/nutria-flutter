@@ -34,16 +34,6 @@ class _ChatIAPageState extends State<ChatIAPage> {
     _scrollController = ScrollController();
   }
 
-  void _showNotification(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   Future<void> _sendMessage(String message) async {
     if (message.isEmpty || hasError) return;
 
@@ -56,9 +46,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
       chatCreated = await _createNewChat();
     }
 
-    // Guardar mensaje del usuario en la conversación antes de enviar a OpenAI
     await _chatService.createConversation(message, chatId!, false);
-
     final response = await _fetchOpenAIResponse(message);
 
     if (response != null) {
@@ -95,6 +83,19 @@ class _ChatIAPageState extends State<ChatIAPage> {
 
   Future<String?> _fetchOpenAIResponse(String message) async {
     final apiUrl = Environment.openAIUrl;
+
+    List<Map<String, String?>> conversationHistory = _visibleMessages.map((msg) {
+      return {
+        'role': msg['role'] as String?,
+        'content': msg['content'] as String?,
+      };
+    }).toList();
+
+    conversationHistory.add({
+      'role': 'user',
+      'content': message,
+    });
+
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -104,10 +105,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
         },
         body: jsonEncode({
           'model': 'gpt-4',
-          'messages': [
-            {'role': 'system', 'content': _getEnhancedSystemPrompt()},
-            {'role': 'user', 'content': message}
-          ],
+          'messages': conversationHistory,
           'max_tokens': 1500,
         }),
       );
@@ -124,14 +122,14 @@ class _ChatIAPageState extends State<ChatIAPage> {
   }
 
   Future<void> _analyzeImageWithVisionService(File image) async {
+    final apiUrl = '${Environment.urlVision}analyze-image';
+    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+    request.files.add(await http.MultipartFile.fromPath('file', image.path));
+
     setState(() {
       _visibleMessages.add({'role': 'user', 'content': '[Imagen cargada]'});
       _isLoading = true;
     });
-
-    final apiUrl = '${Environment.urlVision}analyze-image';
-    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-    request.files.add(await http.MultipartFile.fromPath('file', image.path));
 
     try {
       var streamedResponse = await request.send();
@@ -146,18 +144,16 @@ class _ChatIAPageState extends State<ChatIAPage> {
           _isLoading = false;
         });
 
-        // Guardar la conversación relacionada con la imagen
         await _chatService.createConversation("[Imagen cargada]", chatId!, false);
         await _chatService.createConversation(visionResponse, chatId!, true);
+
       } else {
-        _handleError('Error al analizar la imagen con el servicio de visión.');
+        _handleError('Error al analizar la imagen.');
       }
     } catch (e) {
       _handleError('Error al conectarse con el servicio de visión.');
     }
   }
-
-
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
@@ -179,10 +175,14 @@ class _ChatIAPageState extends State<ChatIAPage> {
     _showNotification(errorMessage, Colors.red);
   }
 
-  String _getEnhancedSystemPrompt() {
-    return """
-Eres un nutricionista profesional que brinda recomendaciones basadas en ciencia actualizada. Tu enfoque está en mejorar la salud del usuario con información detallada, clara y útil.
-""";
+  void _showNotification(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -221,6 +221,7 @@ Eres un nutricionista profesional que brinda recomendaciones basadas en ciencia 
               itemBuilder: (context, index) {
                 final message = _visibleMessages[index];
                 final isUserMessage = message['role'] == 'user';
+
                 return Align(
                   alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
                   child: Padding(
@@ -242,6 +243,9 @@ Eres un nutricionista profesional que brinda recomendaciones basadas en ciencia 
                             decoration: BoxDecoration(
                               color: isUserMessage ? Colors.green[100] : Colors.grey[200],
                               borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.75, // Máximo 75% del ancho de la pantalla
                             ),
                             child: Text(
                               message['content']!,
@@ -270,7 +274,7 @@ Eres un nutricionista profesional que brinda recomendaciones basadas en ciencia 
               child: CircularProgressIndicator(),
             ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
                 Expanded(
@@ -291,7 +295,7 @@ Eres un nutricionista profesional que brinda recomendaciones basadas en ciencia 
                     if (_messageController.text.isNotEmpty) {
                       _sendMessage(_messageController.text);
                       _messageController.clear();
-                      _scrollToBottom(); // Scroll al final al enviar el mensaje
+                      _scrollToBottom();
                     }
                   },
                 ),

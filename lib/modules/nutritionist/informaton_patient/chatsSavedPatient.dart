@@ -35,10 +35,10 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
           children: [
             const SizedBox(height: 20),
             _buildPatientInfo(),
-            const SizedBox(height: 20),
+/*            const SizedBox(height: 20),
             _buildSectionTitle("Iniciar nueva conversación"),
             const SizedBox(height: 20),
-            _buildNewConversationButton(),
+            _buildNewConversationButton(),*/
             const SizedBox(height: 20),
             _buildSectionTitle("Conversaciones guardadas"),
             const SizedBox(height: 20),

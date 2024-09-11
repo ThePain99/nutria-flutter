@@ -1,162 +1,314 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:nutriapp/themes/color.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:nutriapp/services/chat_service.dart';
+import 'package:nutriapp/variables.dart';
 
 class ChatSavedHistorialPage extends StatefulWidget {
-  const ChatSavedHistorialPage({Key? key}) : super(key: key);
+  final int chatId;
+
+  const ChatSavedHistorialPage({Key? key, required this.chatId}) : super(key: key);
 
   @override
   State<ChatSavedHistorialPage> createState() => _ChatSavedHistorialPageState();
 }
 
 class _ChatSavedHistorialPageState extends State<ChatSavedHistorialPage> {
+  final TextEditingController _messageController = TextEditingController();
+  final List<Map<String, String>> _visibleMessages = [];
+  bool _isLoading = false;
+  bool hasError = false;
+  File? _selectedImage;
+
+  final ChatService _chatService = ChatService();
+  ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _loadConversation();
+  }
+
+  Future<void> _loadConversation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      List<dynamic> conversation = await _chatService.getConversationsByChatId(widget.chatId);
+
+      if (conversation.isNotEmpty) {
+        setState(() {
+          for (var message in conversation) {
+            _visibleMessages.add({
+              'role': message['isBot'] ? 'assistant' : 'user',
+              'content': utf8.decode(message['text'].runes.toList()),
+            });
+          }
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _handleError('No hay mensajes en este chat.');
+        });
+      }
+    } catch (e) {
+      _handleError('Error al cargar la conversación: $e');
+    }
+  }
+
+  Future<void> _sendMessage(String message) async {
+    if (message.isEmpty || hasError) return;
+
+    setState(() {
+      _visibleMessages.add({'role': 'user', 'content': message});
+      _isLoading = true;
+    });
+
+    await _chatService.createConversation(message, widget.chatId, false);
+    final response = await _fetchOpenAIResponse(message);
+
+    if (response != null) {
+      setState(() {
+        _visibleMessages.add({'role': 'assistant', 'content': response});
+        _isLoading = false;
+      });
+
+      await _chatService.createConversation(response, widget.chatId, true);
+    } else {
+      _handleError('Error al obtener respuesta de OpenAI.');
+    }
+
+    _scrollToBottom();
+  }
+
+  Future<String?> _fetchOpenAIResponse(String message) async {
+    final apiUrl = Environment.openAIUrl;
+
+    List<Map<String, String?>> conversationHistory = _visibleMessages.map((msg) {
+      return {
+        'role': msg['role'],
+        'content': msg['content'],
+      };
+    }).toList();
+
+    conversationHistory.add({
+      'role': 'user',
+      'content': message,
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer ${Environment.openAIKey}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'model': 'gpt-4',
+          'messages': conversationHistory,
+          'max_tokens': 1500,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data['choices'][0]['message']['content'].trim();
+      } else {
+        return 'Error al conectar con OpenAI.';
+      }
+    } catch (e) {
+      return 'Error al conectarse con OpenAI: $e';
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+      await _analyzeImageWithVisionService(_selectedImage!);
+    }
+  }
+
+  Future<void> _analyzeImageWithVisionService(File image) async {
+    final apiUrl = '${Environment.urlVision}analyze-image';
+    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+    request.files.add(await http.MultipartFile.fromPath('file', image.path));
+
+    setState(() {
+      _visibleMessages.add({'role': 'user', 'content': '[Imagen cargada]'});
+      _isLoading = true;
+    });
+
+    try {
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        String visionResponse = data['response'];
+
+        setState(() {
+          _visibleMessages.add({'role': 'assistant', 'content': visionResponse});
+          _isLoading = false;
+        });
+
+        await _chatService.createConversation("[Imagen cargada]", widget.chatId, false);
+        await _chatService.createConversation(visionResponse, widget.chatId, true);
+
+      } else {
+        _handleError('Error al analizar la imagen.');
+      }
+    } catch (e) {
+      _handleError('Error al conectarse con el servicio de visión.');
+    }
+  }
+
+  void _handleError(String errorMessage) {
+    setState(() {
+      hasError = true;
+      _isLoading = false;
+    });
+    _showNotification(errorMessage, Colors.red);
+  }
+
+  void _showNotification(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              //Contenido
-              SizedBox(height: 20),
-              _buildChat('assets/avatar.jpg',
-                  "Cuantas proteínas, carbohidratos y grasa (en gramos) tiene la tortilla de plátano?"),
-              _buildChat('assets/ChatGPT_Logo.png',
-                  "La cantidad de proteínas, carbohidratos y grasas en una tortilla de plátano puede variar según cómo se prepare y los ingredientes adicionales que se utilicen. Una tortilla de plátano básica, hecha con plátanos maduros, generalmente contiene principalmente carbohidratos y una pequeña cantidad de proteínas y grasas. A continuación, te proporcionaré una estimación aproximada de los valores nutricionales en una tortilla de plátano básica (por cada 100 gramos)"),
-            ],
+      appBar: AppBar(
+        title: const Text('Historial de Conversación'),
+        backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () => _pickImage(ImageSource.camera),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChat(String image, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          ClipOval(
-            child: Image.asset(
-              image,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                side: BorderSide(color: Colors.green, width: 2.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildBlackText(subtitle),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.image),
+            onPressed: () => _pickImage(ImageSource.gallery),
           ),
         ],
       ),
-    );
-  }
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: _visibleMessages.length,
+              itemBuilder: (context, index) {
+                final message = _visibleMessages[index];
+                final isUserMessage = message['role'] == 'user';
 
-  Widget _buildGreyText(String text) {
-    return Text(
-      text,
-      style: const TextStyle(color: Colors.grey, fontSize: 16),
-    );
-  }
-
-  Widget _buildGreenText(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-          color: verdeMain, fontSize: 35, fontWeight: FontWeight.w600),
-    );
-  }
-
-  Widget _buildBlackText(String text) {
-    return Text(
-      text,
-      style: const TextStyle(color: Colors.black, fontSize: 17),
-      textAlign: TextAlign.justify,
-    );
-  }
-
-  Widget _buildBlackTitle(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-          color: Colors.black, fontSize: 28, fontWeight: FontWeight.w400),
-    );
-  }
-
-  Widget _buildBlackSubTitle(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-          color: Colors.black, fontSize: 20, fontWeight: FontWeight.w600),
-    );
-  }
-
-  Widget _buildCardButtom(String subtitle, String image) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-        side: BorderSide(color: Colors.green, width: 2.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+                return Align(
+                  alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!isUserMessage) ...[
+                          CircleAvatar(
+                            backgroundImage: AssetImage('assets/ChatGPT_Logo.png'),
+                            radius: 15,
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isUserMessage ? Colors.green[100] : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.75, // Máximo 75% del ancho de la pantalla
+                            ),
+                            child: Text(
+                              message['content']!,
+                              style: const TextStyle(fontSize: 16),
+                              softWrap: true,
+                            ),
+                          ),
+                        ),
+                        if (isUserMessage) ...[
+                          const SizedBox(width: 8),
+                          CircleAvatar(
+                            backgroundImage: AssetImage('assets/avatar.jpg'),
+                            radius: 15,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBlackText(subtitle),
-                    ],
+                  child: TextField(
+                    controller: _messageController,
+                    enabled: !_isLoading && !hasError,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe un mensaje...',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-                SizedBox(height: 10),
-                ClipOval(
-                  child: Image.asset(
-                    image,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _isLoading || hasError
+                      ? null
+                      : () {
+                    if (_messageController.text.isNotEmpty) {
+                      _sendMessage(_messageController.text);
+                      _messageController.clear();
+                      _scrollToBottom();
+                    }
+                  },
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

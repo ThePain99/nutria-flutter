@@ -16,7 +16,7 @@ class NutriaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "Nutria",
       theme: ThemeData(primarySwatch: Colors.green),
-      home: const SideBarlayout(),
+      home: const LoginPage(),
     );
   }
 }
