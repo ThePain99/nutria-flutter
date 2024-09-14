@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nutriapp/modules/nutritionist/profile/profileNutricionistEdit.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/nutritionist/bloc_navigation_nutricionist/navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Nutritionist.dart';
+import '../../../models/Patient.dart';
 
 class ProfileNutricionistPage extends StatefulWidget
     with NavigationNutricionistStates {
@@ -14,6 +20,34 @@ class ProfileNutricionistPage extends StatefulWidget
 }
 
 class _ProfileNutricionistPageState extends State<ProfileNutricionistPage> {
+  Nutritionist nutritionist = new Nutritionist(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      licenceNumber: "",
+      specialty: "");
+
+  //initstate
+  @override
+  void initState() {
+    fetchNutritionist();
+    super.initState();
+  }
+
+  //fetchPatient
+  Future<void> fetchNutritionist() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('nutritionist')!;
+    setState(() {
+      nutritionist = Nutritionist
+          .fromJson(jsonDecode(userTemp));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,7 +79,7 @@ class _ProfileNutricionistPageState extends State<ProfileNutricionistPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Nombre:")),
-                    Expanded(flex: 2, child: _buildBlackText("Dan Mitchel")),
+                    Expanded(flex: 2, child: _buildBlackText(nutritionist.name)),
                   ],
                 ),
               ),
@@ -54,7 +88,7 @@ class _ProfileNutricionistPageState extends State<ProfileNutricionistPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Edad:")),
-                    Expanded(flex: 2, child: _buildBlackText("29 años")),
+                    Expanded(flex: 2, child: _buildBlackText(nutritionist.birthday)),
                   ],
                 ),
               ),

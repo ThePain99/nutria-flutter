@@ -58,7 +58,7 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
     });
     nutritionist =
         (await NutritionistServices().fetchNutritionistById(user!.id))!;
-    // prefs.setString("user", jsonEncode(nutritionist));
+    prefs.setString("nutritionist", jsonEncode(nutritionist));
   }
 
   Future<void> fetchPatients() async {

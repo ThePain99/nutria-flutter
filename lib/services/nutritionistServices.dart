@@ -61,9 +61,9 @@ class NutritionistServices {
   //assign nutritionist to patient
   Future<String?> assignNutritionistToPatient(int nutritionistId, String patientDni) async {
     final url = Uri.parse('${Environment.baseUrl}patient/$patientDni/nutritionist/$nutritionistId');
-
+    print('nutritionistId: $nutritionistId'+ 'patientDni: $patientDni');
     try {
-      final response = await http.post(
+      final response = await http.put(
         url,
         headers: {
           'Content-Type': 'application/json',

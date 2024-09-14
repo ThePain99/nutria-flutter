@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
 import 'package:nutriapp/services/nutritionistServices.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/nutritionist/bloc_navigation_nutricionist/navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../models/Nutritionist.dart';
 import '../../../models/Patient.dart';
 import '../../../models/User.dart';
 
@@ -37,10 +39,32 @@ class _CodePatientPageState extends State<CodePatientPage> {
       allergies: [],
       objective: "");
 
+  Nutritionist nutritionist = new Nutritionist(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      licenceNumber: "",
+      specialty: "");
+
   @override
   void initState() {
     setPatient();
+    fetchNutritionist();
     super.initState();
+  }
+
+  //fetchPatient
+  Future<void> fetchNutritionist() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('nutritionist')!;
+    setState(() {
+      nutritionist = Nutritionist
+          .fromJson(jsonDecode(userTemp));
+    });
   }
 
   Future<void> setPatient() async {
@@ -91,9 +115,9 @@ class _CodePatientPageState extends State<CodePatientPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildBlackText("Nombre: Melissa Suarez"),
+                            _buildBlackText("Nombre: " + nutritionist.name),
                             SizedBox(height: 8),
-                            _buildBlackText("Edad: 31 años"),
+                            _buildBlackText("Edad: " + Utils.calculateAge(nutritionist.birthday) + " años"),
                           ],
                         ),
                       ),
@@ -122,7 +146,7 @@ class _CodePatientPageState extends State<CodePatientPage> {
                     GestureDetector(
                       onTap: () {
                         NutritionistServices().assignNutritionistToPatient(
-                            user!.id, patient.dni);
+                            user!.id, codePatient.text);
                       },
                       child: _buildGreenTextCenter("Ingresar"),
                     ),
@@ -144,7 +168,7 @@ class _CodePatientPageState extends State<CodePatientPage> {
       textAlign: TextAlign.center,
       style: TextStyle(fontSize: 30),
       cursorColor: Colors.green,
-      maxLength: 6,
+      maxLength: 8,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         hintText: 'Escribe algo...',
