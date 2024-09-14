@@ -81,26 +81,47 @@ class _ChatIAPageState extends State<ChatIAPage> {
     }
   }
 
+  String formatRecipeTitles(String response) {
+    // Define los patrones para todas las variaciones posibles de los títulos
+    final Map<String, RegExp> titlePatterns = {
+      'Título: ': RegExp(r'\b[Tt][íi]?tulo\s*:\s*', caseSensitive: false),
+      'Tiempo de preparación: ': RegExp(r'\b[Tt]iempo\s+de\s+preparaci[oó]n\s*:\s*', caseSensitive: false),
+      'Nivel de dificultad: ': RegExp(r'\b[Nn]ivel\s+de\s+dificultad\s*:\s*', caseSensitive: false),
+      'Ingredientes: ': RegExp(r'\b[Ii]ngredientes\s*:\s*', caseSensitive: false),
+      'Utensilios: ': RegExp(r'\b[Uu]tensilios\s*:\s*', caseSensitive: false),
+      'Pasos de preparación: ': RegExp(r'\b[Pp]asos\s+de\s+preparaci[oó]n\s*:\s*', caseSensitive: false),
+      'Valores nutricionales: ': RegExp(r'\b[Vv]alores\s+nutricionales\s*:\s*', caseSensitive: false),
+    };
+
+    // Reemplaza todas las variaciones por el formato correcto
+    String formattedResponse = response;
+    titlePatterns.forEach((correctTitle, pattern) {
+      formattedResponse = formattedResponse.replaceAll(pattern, correctTitle);
+    });
+
+    return formattedResponse;
+  }
+
   Future<String?> _fetchOpenAIResponse(String message) async {
     final apiUrl = Environment.openAIUrl;
 
     String initialPrompt = """
-    Eres un asistente de nutrición muy avanzado que se preocupa profundamente por el bienestar físico y mental del usuario. 
-    Siempre brindas recomendaciones detalladas y personalizadas basadas en hábitos saludables, equilibrio nutricional y estilo de vida. 
-    Tus respuestas son claras y directas, pero a la vez completas, asegurando que el usuario reciba toda la información necesaria para hacer elecciones alimenticias responsables y sostenibles. 
-    Tus recomendaciones están basadas en la ciencia más actualizada y consideras factores como alergias, preferencias alimentarias, necesidades nutricionales específicas y objetivos de salud. 
-    Siempre motivas al usuario a mejorar su bienestar físico y emocional a largo plazo, recordándoles la importancia de mantenerse activos y de llevar una vida equilibrada tanto en lo físico como en lo mental.
-    
-    Si el usuario solicita una receta alimenticia, devuélvela en el siguiente formato:
-    
-    - Título: [Título de la receta]
-    - Tiempo de preparación: [Tiempo estimado]
-    - Nivel de dificultad: [Del 1 al 5]
-    - Ingredientes: [Lista de ingredientes con cantidades específicas]
-    - Utensilios: [Utensilios necesarios]
-    - Pasos de preparación: [Lista de pasos]
-    - Valores nutricionales: [Calorías, grasas, proteínas, carbohidratos, etc.]
-    """;
+  Eres un asistente de nutrición muy avanzado que se preocupa profundamente por el bienestar físico y mental del usuario. 
+  Siempre brindas recomendaciones detalladas y personalizadas basadas en hábitos saludables, equilibrio nutricional y estilo de vida. 
+  Tus respuestas son claras y directas, pero a la vez completas, asegurando que el usuario reciba toda la información necesaria para hacer elecciones alimenticias responsables y sostenibles. 
+  Tus recomendaciones están basadas en la ciencia más actualizada y consideras factores como alergias, preferencias alimentarias, necesidades nutricionales específicas y objetivos de salud. 
+  Siempre motivas al usuario a mejorar su bienestar físico y emocional a largo plazo, recordándoles la importancia de mantenerse activos y de llevar una vida equilibrada tanto en lo físico como en lo mental.
+
+  Si el usuario solicita una receta alimenticia, devuélvela en el siguiente formato:
+
+  - Título: [Título de la receta]
+  - Tiempo de preparación: [Tiempo estimado]
+  - Nivel de dificultad: [Del 1 al 5]
+  - Ingredientes: [Lista de ingredientes con cantidades específicas]
+  - Utensilios: [Utensilios necesarios]
+  - Pasos de preparación: [Lista de pasos]
+  - Valores nutricionales: [Calorías, grasas, proteínas, carbohidratos, etc.]
+  """;
 
     List<Map<String, String?>> conversationHistory = _visibleMessages.map((msg) {
       return {
@@ -135,7 +156,12 @@ class _ChatIAPageState extends State<ChatIAPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        return data['choices'][0]['message']['content'].trim();
+        String aiResponse = data['choices'][0]['message']['content'].trim();
+
+        // Llama a la función para formatear todos los títulos
+        aiResponse = formatRecipeTitles(aiResponse);
+
+        return aiResponse;
       } else {
         return 'Error al conectar con OpenAI.';
       }
