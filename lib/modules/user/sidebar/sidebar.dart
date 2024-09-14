@@ -130,6 +130,26 @@ class _SideBarState extends State<SideBar>
         ),
         const SizedBox(height: 10),
         MenuItem(
+          icon: Icons.car_crash,
+          title: "Gráficos",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.GraphicsClickedEvent);
+          },
+        ),
+        const SizedBox(height: 10),
+        MenuItem(
+          icon: Icons.favorite,
+          title: "Favoritos",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.FavoriteFoodClickedEvent);
+          },
+        ),
+        const SizedBox(height: 10),
+        MenuItem(
           icon: Icons.chat_bubble_outline,
           title: "Iniciar nueva conversación",
           onTap: () {
@@ -145,6 +165,27 @@ class _SideBarState extends State<SideBar>
             onIconPressed();
             BlocProvider.of<NavigationBloc>(context)
                 .add(NavigationEvents.SavedChatsClickedEvent);
+          },
+        ),
+        const SizedBox(height: 10),
+        MenuItem(
+          icon: Icons.policy,
+          title: "Política de Uso",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.UserPolitcsClickedEvent);
+          },
+        ),
+        const SizedBox(height: 10),
+        MenuItem(
+          icon: Icons.logout,
+          title: "Salir",
+          onTap: () {
+            onIconPressed();
+            BlocProvider.of<NavigationBloc>(context)
+                .add(NavigationEvents.LogoutClickedEvent);
+
           },
         ),
       ],

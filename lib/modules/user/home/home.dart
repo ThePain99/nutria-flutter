@@ -1,6 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:nutriapp/models/Patient.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
 import 'package:nutriapp/themes/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/User.dart';
+import '../../../services/patientServices.dart';
 
 class HomePage extends StatefulWidget with NavigationStates {
   const HomePage({Key? key}) : super(key: key);
@@ -10,6 +17,39 @@ class HomePage extends StatefulWidget with NavigationStates {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  User? user;
+  Patient patient = new Patient(id: 0, name: "", lastName: "", email: "", phone: "", address: ""
+      , birthday: "", dni: "", code: "", height: 0, weight: 0, imageUrl: "", preferences: [], allergies: [],
+      objective: "");
+
+  @override
+  void initState() {
+    print("entrando a home");
+    fetchPatient();
+    super.initState();
+  }
+
+  Future<void> fetchPatient() async {
+    print("entrando a home2");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userTemp = prefs.getString('user');
+    print("patientString");
+    print("usertemp"+userTemp!);
+    setState(() {
+      if (userTemp != null) {
+        user = User.fromJson(jsonDecode(userTemp) as Map<String, dynamic>);
+      } else {
+        print("No patient found in SharedPreferences");
+      }
+    });
+
+    patient = (await PatientServices().fetchPatientById(user!.id))!;
+
+    print("namepatient"+ patient.name);
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,9 +93,9 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                buildText("Nombre: Dan Mitchel", Colors.black, 18),
+                buildText("Nombre: " + patient.name + " " + patient.lastName, Colors.black, 18),
                 const SizedBox(height: 8),
-                buildText("Edad: 29 años", Colors.black, 18),
+                buildText("Edad: " + patient.birthday , Colors.black, 18),
               ],
             ),
           ),

@@ -1,10 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:nutriapp/models/Nutritionist.dart';
+import 'package:nutriapp/models/User.dart';
 import 'package:nutriapp/modules/nutritionist/bloc_navigation_nutricionist/navigation.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/chatsSavedPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/favoriteFoodPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/graphicsPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/profilePatient.dart';
+import 'package:nutriapp/services/nutritionistServices.dart';
 import 'package:nutriapp/themes/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeNutricionistPage extends StatefulWidget
     with NavigationNutricionistStates {
@@ -15,6 +21,45 @@ class HomeNutricionistPage extends StatefulWidget
 }
 
 class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
+
+  User? user;
+  Nutritionist nutritionist = new Nutritionist(id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      licenceNumber: "",
+      specialty: "");
+
+  @override
+  void initState() {
+    print("entrando a home");
+    fetchNutritionist();
+    super.initState();
+  }
+
+  Future<void> fetchNutritionist() async {
+    print("entrando a home2");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userTemp = prefs.getString('user');
+    setState(() {
+      if (userTemp != null) {
+        user = User.fromJson(jsonDecode(userTemp) as Map<String, dynamic>);
+      } else {
+        print("No nutritionist found in SharedPreferences");
+      }
+    });
+
+    print(user);
+
+    nutritionist = (await NutritionistServices().fetchNutritionistById(user!.id))!;
+
+    print("nutritinistName" + nutritionist.name);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:nutriapp/models/Patient.dart';
+import 'package:nutriapp/models/User.dart';
 import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionist.dart';
+import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionistLayout.dart';
 import 'package:nutriapp/modules/user/sidebar/sidebar.dart';
 import 'package:nutriapp/modules/user/sidebar/sidebarLayout.dart';
 import 'package:nutriapp/themes/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/loginService.dart';
 
 class LoginPage extends StatefulWidget {
@@ -150,16 +156,20 @@ class _LoginPageState extends State<LoginPage> {
               context, 'AVISO', 'Complete todos los campos para continuar.');
         } else {
           final loginService = LoginService();
-          final response = await loginService.login(email, password);
+          User? response = await loginService.login(email, password);
+
+          print(response);
 
           if (response != null) {
-            String role = response['role'] ?? '';
+            String role = response.role;
             if (role == 'nutricionista') {
+              saveUserData(jsonEncode(response));
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                    builder: (context) => SideBarNutricionist()),
+                    builder: (context) => SideBarNutricionistlayout()),
               );
             } else if (role == 'paciente') {
+              saveUserData(jsonEncode(response));
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => SideBarlayout()),
               );
@@ -211,5 +221,10 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
+  }
+
+  Future<void> saveUserData(String user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('user', user);
   }
 }

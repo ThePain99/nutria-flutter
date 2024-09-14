@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:nutriapp/models/User.dart';
 import 'package:nutriapp/variables.dart';
 
 class LoginService {
-  Future<Map<String, dynamic>?> login(String email, String password) async {
+  Future<User?> login(String email, String password) async {
     final url = Uri.parse('${Environment.baseUrl}user/login');
 
     final body = jsonEncode({
@@ -22,7 +23,9 @@ class LoginService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final jsonResponse = jsonDecode(response.body);
+        User user = User.fromJson(jsonResponse);
+        return user;
       } else {
         throw Exception('Error ${response.statusCode}');
       }
