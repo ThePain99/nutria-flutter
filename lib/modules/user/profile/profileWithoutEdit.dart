@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
 import 'package:nutriapp/modules/user/profile/profileWithEdit.dart';
@@ -43,7 +44,7 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
   //fetchPatient
   Future<void> fetchPatient() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userTemp = prefs.getString('user')!;
+    String userTemp = prefs.getString('patient')!;
     setState(() {
       patient = Patient.fromJson(jsonDecode(userTemp));
     });
@@ -79,7 +80,7 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Nombre:")),
-                    Expanded(flex: 2, child: _buildBlackText("Dan Mitchel")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.name)),
                   ],
                 ),
               ),
@@ -88,7 +89,7 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Edad:")),
-                    Expanded(flex: 2, child: _buildBlackText("29 años")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.birthday)),
                   ],
                 ),
               ),
@@ -97,7 +98,7 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Estatura:")),
-                    Expanded(flex: 2, child: _buildBlackText("152 cm")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.height.toString() + " cm")),
                   ],
                 ),
               ),
@@ -106,7 +107,7 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Peso:")),
-                    Expanded(flex: 2, child: _buildBlackText("70 KG")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.weight.toString() + " KG")),
                   ],
                 ),
               ),
@@ -120,15 +121,15 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  children: [
-                    Expanded(flex: 2, child: _buildBlackSubTitle("Nombre")),
-                    Expanded(flex: 2, child: _buildBlackText("Dan Mitchel")),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 8.0),
+              //   child: Row(
+              //     children: [
+              //       Expanded(flex: 2, child: _buildBlackSubTitle("Nombre")),
+              //       Expanded(flex: 2, child: _buildBlackText("Dan Mitchel")),
+              //     ],
+              //   ),
+              // ),
               const SizedBox(height: 10),
               _buildBlackSubTitle("Objetivo:"),
               Container(
@@ -138,14 +139,15 @@ class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
                     // Acción cuando se presiona el Card
                   },
                   child: _buildCardButtom(
-                      "Ganar Musculo",
-                      "Pon tus musculos fuertes y gana fuerza",
+                      patient.objective,
+                      Utils.setObjetive(patient.objective),
                       'assets/ganar_musculo.png'),
                 ),
               ),
               const SizedBox(height: 15),
               _buildBlackSubTitle("Afecciones:"),
-              _buildBlackText("Alérgico a los mariscos"),
+              for (var i = 0; i < patient.allergies.length; i++)
+                _buildBlackText(patient.allergies[i]),
               const SizedBox(height: 15),
               _buildBlackSubTitle("Comidas favoritas:"),
               Container(

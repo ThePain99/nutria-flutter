@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../models/Aliments.dart';
 import '../../../models/Patient.dart';
 import '../../../services/patientServices.dart';
+import '../../utils/Utils.dart';
 
 class FavoritePage extends StatefulWidget with NavigationStates {
   const FavoritePage({Key? key}) : super(key: key);
@@ -95,9 +96,10 @@ class _FavoritePageState extends State<FavoritePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildBlackText("Nombre: Dan Mitchel"),
+                            _buildBlackText("Nombre: " + patient.name),
                             SizedBox(height: 8),
-                            _buildBlackText("Edad: 29 años"),
+                            _buildBlackText("Edad: " +
+                                Utils.calculateAge(patient.birthday) + " años"),
                           ],
                         ),
                       ),

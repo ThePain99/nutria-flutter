@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       patient = fetchPatient;
     });
-    prefs.setString("user", jsonEncode(patient));
+    prefs.setString("patient", jsonEncode(patient));
   }
 
   Future<void> fetchAlimentsByPatientId() async {

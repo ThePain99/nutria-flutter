@@ -47,7 +47,7 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
   //fetchPatient
   Future<void> fetchPatient() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userTemp = prefs.getString('user')!;
+    String userTemp = prefs.getString('patient')!;
     setState(() {
       patient = Patient
           .fromJson(jsonDecode(userTemp));
