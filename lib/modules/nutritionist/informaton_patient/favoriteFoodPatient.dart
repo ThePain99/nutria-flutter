@@ -1,8 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:nutriapp/services/patientServices.dart';
 import 'package:nutriapp/themes/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Aliments.dart';
+import '../../../models/Patient.dart';
 
 class FavoriteFoodPatientPage extends StatefulWidget {
   const FavoriteFoodPatientPage({Key? key}) : super(key: key);
@@ -13,6 +20,45 @@ class FavoriteFoodPatientPage extends StatefulWidget {
 }
 
 class _FavoriteFoodPatientPageState extends State<FavoriteFoodPatientPage> {
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+
+  List<Aliments> aliments = [];
+
+  @override
+  void initState() {
+    fetchAlimentsByPatientId();
+    super.initState();
+  }
+
+  Future<void> fetchAlimentsByPatientId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String patientTmp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(patientTmp));
+    });
+    print("patientId: ${patient.id}");
+    List<Aliments> fetchedAliments =
+        await PatientServices().fetchAlimentsByPatientId(patient.id);
+    setState(() {
+      aliments = fetchedAliments;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,18 +116,16 @@ class _FavoriteFoodPatientPageState extends State<FavoriteFoodPatientPage> {
               ),
               const SizedBox(height: 20),
               _buildGreenText("Comidas favoritas"),
-              _buildBlackTitle("Desayuno"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
-              _buildBlackTitle("Almuerzo"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
-              _buildBlackTitle("Cena"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
+              _buildBlackTitle("Alimentos"),
+              for (var aliment in aliments) RecipeTile(aliment: aliment),
+              // _buildBlackTitle("Almuerzo"),
+              // RecipeTile(),
+              // RecipeTile(),
+              // RecipeTile(),
+              // _buildBlackTitle("Cena"),
+              // RecipeTile(),
+              // RecipeTile(),
+              // RecipeTile(),
               const SizedBox(height: 20),
             ],
           ),
@@ -131,6 +175,11 @@ class _FavoriteFoodPatientPageState extends State<FavoriteFoodPatientPage> {
 }
 
 class RecipeTile extends StatefulWidget {
+  final Aliments aliment;
+
+  // Constructor que acepta la propiedad
+  RecipeTile({Key? key, required this.aliment}) : super(key: key);
+
   //aqui empieza el menu desplegable
   @override
   _RecipeTileState createState() => _RecipeTileState();
@@ -148,9 +197,12 @@ class _RecipeTileState extends State<RecipeTile> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         collapsedShape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: verdeMain, //color cuando esta desplegado
-        collapsedBackgroundColor: Colors.amber, //color cuando esta plegado
-        title: _buildwhiteSubTitle("Tortilla de Platano"),
+        backgroundColor: verdeMain,
+        //color cuando esta desplegado
+        collapsedBackgroundColor: Colors.amber,
+        //color cuando esta plegado
+        title: _buildwhiteSubTitle(
+            utf8.decode(widget.aliment.name.runes.toList())),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

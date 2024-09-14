@@ -5,7 +5,9 @@ import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/chatsSavedHistorialPatient.dart';
 import 'package:nutriapp/variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../models/Patient.dart';
 import '../chat/conversation.dart';
 
 class ChatSavedPatientPage extends StatefulWidget {
@@ -18,11 +20,38 @@ class ChatSavedPatientPage extends StatefulWidget {
 class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
   late Future<List<dynamic>> _chatsFuture;
   final ChatService _chatService = ChatService();
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
 
   @override
   void initState() {
+    _chatsFuture = getChatsByPatientId();
     super.initState();
-    _chatsFuture = _chatService.getChatsByPatientId(Environment.patientId);
+    // print(patientId);
+    // _chatsFuture = _chatService.getChatsByPatientId(patientId);
+  }
+
+  Future<List> getChatsByPatientId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String patientTmp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(patientTmp));
+    });
+    return _chatService.getChatsByPatientId(patient.id);
   }
 
   @override
@@ -48,14 +77,18 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return const Center(child: Text('Error al cargar los chats.'));
+                  return const Center(
+                      child: Text('Error al cargar los chats.'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No hay conversaciones guardadas.'));
+                  return const Center(
+                      child: Text('No hay conversaciones guardadas.'));
                 } else {
                   List<dynamic> chats = snapshot.data!;
-                  chats.sort((a, b) => b['id'].compareTo(a['id'])); // Orden descendente por chatId
+                  chats.sort((a, b) => b['id']
+                      .compareTo(a['id'])); // Orden descendente por chatId
                   return Column(
-                    children: chats.map((chat) => _buildChatItem(chat)).toList(),
+                    children:
+                        chats.map((chat) => _buildChatItem(chat)).toList(),
                   );
                 }
               },
@@ -87,9 +120,9 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildText("Nombre: Dan Mitchel", Colors.black, 18),
+                _buildText("Nombre: " + patient.name, Colors.black, 18),
                 const SizedBox(height: 8),
-                _buildText("Edad: 29 años", Colors.black, 18),
+                _buildText('Edad: ${patient.birthday} años', Colors.black, 18),
               ],
             ),
           ),
@@ -149,7 +182,8 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChatSavedHistorialPatientPage(chatId: chat['id']),
+            builder: (context) =>
+                ChatSavedHistorialPatientPage(chatId: chat['id']),
           ),
         );
       },
@@ -174,7 +208,8 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
               const SizedBox(width: 10),
               Expanded(
                 // Asegúrate de decodificar correctamente el nombre del chat
-                child: _buildText(utf8.decode(chat['chatName'].runes.toList()), Colors.black, 18),
+                child: _buildText(utf8.decode(chat['chatName'].runes.toList()),
+                    Colors.black, 18),
               ),
             ],
           ),
@@ -183,10 +218,12 @@ class _ChatSavedPatientPageState extends State<ChatSavedPatientPage> {
     );
   }
 
-  Widget _buildText(String text, Color color, double fontSize, [FontWeight fontWeight = FontWeight.normal]) {
+  Widget _buildText(String text, Color color, double fontSize,
+      [FontWeight fontWeight = FontWeight.normal]) {
     return Text(
       text,
-      style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+      style:
+          TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
     );
   }
 }

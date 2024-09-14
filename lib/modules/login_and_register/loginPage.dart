@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:nutriapp/models/Patient.dart';
 import 'package:nutriapp/models/User.dart';
+import 'package:nutriapp/modules/login_and_register/registerPage.dart';
 import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionist.dart';
 import 'package:nutriapp/modules/nutritionist/sidebar_nutricionist/sidebarNutricionistLayout.dart';
 import 'package:nutriapp/modules/user/sidebar/sidebar.dart';
@@ -137,7 +138,11 @@ class _LoginPageState extends State<LoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(onPressed: () {}, child: _buildGreyText("Sign up here")),
+        TextButton(onPressed: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => RegisterPage()),
+          );
+        }, child: _buildGreyText("Sign up here")),
         TextButton(
             onPressed: () {},
             child: _buildGreyText("I forgot my password"))

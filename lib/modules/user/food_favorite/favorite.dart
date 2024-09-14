@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Aliments.dart';
+import '../../../models/Patient.dart';
+import '../../../services/patientServices.dart';
 
 class FavoritePage extends StatefulWidget with NavigationStates {
   const FavoritePage({Key? key}) : super(key: key);
@@ -13,6 +20,44 @@ class FavoritePage extends StatefulWidget with NavigationStates {
 }
 
 class _FavoritePageState extends State<FavoritePage> {
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+
+  List<Aliments> aliments = [];
+
+  @override
+  void initState() {
+    fetchAlimentsByPatientId();
+    super.initState();
+  }
+
+  Future<void> fetchAlimentsByPatientId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String patientTmp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(patientTmp));
+    });
+    print("patientId: ${patient.id}");
+    List<Aliments> fetchedAliments =
+    await PatientServices().fetchAlimentsByPatientId(patient.id);
+    setState(() {
+      aliments = fetchedAliments;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,17 +116,15 @@ class _FavoritePageState extends State<FavoritePage> {
               const SizedBox(height: 20),
               _buildGreenText("Comidas favoritas"),
               _buildBlackTitle("Desayuno"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
-              _buildBlackTitle("Almuerzo"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
-              _buildBlackTitle("Cena"),
-              RecipeTile(),
-              RecipeTile(),
-              RecipeTile(),
+              for (var aliment in aliments) RecipeTile(aliment: aliment),
+              // _buildBlackTitle("Almuerzo"),
+              // RecipeTile(),
+              // RecipeTile(),
+              // RecipeTile(),
+              // _buildBlackTitle("Cena"),
+              // RecipeTile(),
+              // RecipeTile(),
+              // RecipeTile(),
               const SizedBox(height: 20),
             ],
           ),
@@ -131,6 +174,10 @@ class _FavoritePageState extends State<FavoritePage> {
 }
 
 class RecipeTile extends StatefulWidget {
+  final Aliments aliment;
+
+  // Constructor que acepta la propiedad
+  RecipeTile({Key? key, required this.aliment}) : super(key: key);
   //aqui empieza el menu desplegable
   @override
   _RecipeTileState createState() => _RecipeTileState();

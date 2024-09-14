@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:nutriapp/modules/login_and_register/loginPage.dart';
 import 'package:nutriapp/themes/color.dart';
+
+import '../../services/loginService.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +17,7 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController dniController = TextEditingController();
   bool rememberUser = false;
 
   void _showCamposBlancos(BuildContext context) {
@@ -157,9 +161,12 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(height: 30),
         _buildGreyText("Full Name"),
         _buildInputField(nameController),
-        const SizedBox(height: 30),
+        const SizedBox(height: 20),
         _buildGreyText("Email address"),
         _buildInputField(emailController),
+        const SizedBox(height: 20),
+        _buildGreyText("DNI"),
+        _buildInputField(dniController),
         const SizedBox(height: 40),
         _buildGreyText("Password"),
         _buildInputField(passwordController, isPassword: true),
@@ -194,7 +201,11 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(onPressed: () {}, child: _buildGreyText("Log In here <3")),
+        TextButton(onPressed: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        }, child: _buildGreyText("Log In here <3")),
         TextButton(
             onPressed: () {}, child: _buildGreyText("I forgot my password"))
       ],
@@ -204,9 +215,11 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildLoginButton() {
     return ElevatedButton(
       onPressed: () {
-        debugPrint("Name : ${nameController.text}");
-        debugPrint("Email : ${emailController.text}");
-        debugPrint("Password : ${passwordController.text}");
+        LoginService().register(
+            nameController.text, emailController.text, passwordController.text, dniController.text);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
       },
       style: ElevatedButton.styleFrom(
         shape: const StadiumBorder(),

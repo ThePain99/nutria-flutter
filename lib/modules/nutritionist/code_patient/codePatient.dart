@@ -1,8 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:nutriapp/services/nutritionistServices.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/nutritionist/bloc_navigation_nutricionist/navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Patient.dart';
+import '../../../models/User.dart';
 
 class CodePatientPage extends StatefulWidget with NavigationNutricionistStates {
   const CodePatientPage({Key? key}) : super(key: key);
@@ -12,6 +19,40 @@ class CodePatientPage extends StatefulWidget with NavigationNutricionistStates {
 }
 
 class _CodePatientPageState extends State<CodePatientPage> {
+  User? user;
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+
+  @override
+  void initState() {
+    setPatient();
+    super.initState();
+  }
+
+  Future<void> setPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String patientTmp = prefs.getString('patient')!;
+    String userTmp = prefs.getString('user')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(patientTmp));
+      user = User.fromJson(jsonDecode(userTmp));
+    });
+  }
+
   TextEditingController codePatient = TextEditingController();
   @override
   Widget build(BuildContext context) {
@@ -80,7 +121,8 @@ class _CodePatientPageState extends State<CodePatientPage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        //Ingresar accion aqui
+                        NutritionistServices().assignNutritionistToPatient(
+                            user!.id, patient.dni);
                       },
                       child: _buildGreenTextCenter("Ingresar"),
                     ),

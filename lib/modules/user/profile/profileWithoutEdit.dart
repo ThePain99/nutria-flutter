@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
 import 'package:nutriapp/modules/user/profile/profileWithEdit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Patient.dart';
 
 class ProfileWithoutPage extends StatefulWidget with NavigationStates {
   const ProfileWithoutPage({Key? key}) : super(key: key);
@@ -12,6 +17,37 @@ class ProfileWithoutPage extends StatefulWidget with NavigationStates {
 }
 
 class _ProfileWithoutPageState extends State<ProfileWithoutPage> {
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+  //initstate
+  @override
+  void initState() {
+    fetchPatient();
+    super.initState();
+  }
+
+  //fetchPatient
+  Future<void> fetchPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('user')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(userTemp));
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

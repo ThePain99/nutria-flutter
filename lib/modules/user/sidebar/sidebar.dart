@@ -128,16 +128,16 @@ class _SideBarState extends State<SideBar>
                 .add(NavigationEvents.ProfileClickedEvent);
           },
         ),
-        const SizedBox(height: 10),
-        MenuItem(
-          icon: Icons.car_crash,
-          title: "Gráficos",
-          onTap: () {
-            onIconPressed();
-            BlocProvider.of<NavigationBloc>(context)
-                .add(NavigationEvents.GraphicsClickedEvent);
-          },
-        ),
+        // const SizedBox(height: 10),
+        // MenuItem(
+        //   icon: Icons.car_crash,
+        //   title: "Gráficos",
+        //   onTap: () {
+        //     onIconPressed();
+        //     BlocProvider.of<NavigationBloc>(context)
+        //         .add(NavigationEvents.GraphicsClickedEvent);
+        //   },
+        // ),
         const SizedBox(height: 10),
         MenuItem(
           icon: Icons.favorite,

@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:nutriapp/models/Patient.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../models/Aliments.dart';
 import '../../../models/User.dart';
 import '../../../services/patientServices.dart';
 
@@ -23,31 +25,39 @@ class _HomePageState extends State<HomePage> {
       , birthday: "", dni: "", code: "", height: 0, weight: 0, imageUrl: "", preferences: [], allergies: [],
       objective: "");
 
+  List<Aliments> aliments = [];
+
   @override
   void initState() {
-    print("entrando a home");
     fetchPatient();
+    fetchAlimentsByPatientId();
     super.initState();
   }
 
   Future<void> fetchPatient() async {
-    print("entrando a home2");
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? userTemp = prefs.getString('user');
-    print("patientString");
-    print("usertemp"+userTemp!);
+    String userTemp = prefs.getString('user')!;
     setState(() {
-      if (userTemp != null) {
-        user = User.fromJson(jsonDecode(userTemp) as Map<String, dynamic>);
-      } else {
-        print("No patient found in SharedPreferences");
-      }
+      user = User.fromJson(jsonDecode(userTemp));
     });
+    Patient fetchPatient = (await PatientServices().fetchPatientById(user!.id))!;
+    setState(() {
+      patient = fetchPatient;
+    });
+    prefs.setString("user", jsonEncode(patient));
+  }
 
-    patient = (await PatientServices().fetchPatientById(user!.id))!;
-
-    print("namepatient"+ patient.name);
-
+  Future<void> fetchAlimentsByPatientId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('user')!;
+    setState(() {
+      user = User.fromJson(jsonDecode(userTemp));
+    });
+    List<Aliments> fetchedAliments =
+    await PatientServices().fetchAlimentsByPatientId(user!.id);
+    setState(() {
+      aliments = fetchedAliments;
+    });
   }
 
   @override
@@ -63,8 +73,6 @@ class _HomePageState extends State<HomePage> {
               buildUserProfile(),
               const SizedBox(height: 20),
               buildMenuSection("Menú del día", "Desayuno"),
-              buildMenuSection("Menú del día", "Almuerzo"),
-              buildMenuSection("Menú del día", "Cena"),
             ],
           ),
         ),
@@ -95,7 +103,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 buildText("Nombre: " + patient.name + " " + patient.lastName, Colors.black, 18),
                 const SizedBox(height: 8),
-                buildText("Edad: " + patient.birthday , Colors.black, 18),
+                buildText("Edad: " + Utils.calculateAge(patient.birthday) , Colors.black, 18),
               ],
             ),
           ),
@@ -118,7 +126,7 @@ class _HomePageState extends State<HomePage> {
       children: [
         buildText(sectionTitle, verdeMain, 35, FontWeight.w600),
         buildText(mealTitle, Colors.black, 28, FontWeight.w400),
-        const RecipeTile(),
+        for (var aliment in aliments) RecipeTile(aliment: aliment),
       ],
     );
   }
@@ -133,7 +141,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class RecipeTile extends StatefulWidget {
-  const RecipeTile({Key? key}) : super(key: key);
+  final Aliments aliment;
+  RecipeTile({Key? key, required this.aliment}) : super(key: key);
 
   @override
   _RecipeTileState createState() => _RecipeTileState();
@@ -161,8 +170,9 @@ class _RecipeTileState extends State<RecipeTile> {
   }
 
   Widget _buildTileTitle() {
-    return const Text(
-      "Tortilla de Platano",
+    String title = utf8.decode(widget.aliment.name.runes.toList());
+    return Text(
+      title,
       style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
     );
   }

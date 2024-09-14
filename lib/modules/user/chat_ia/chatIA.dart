@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:nutriapp/models/User.dart';
 import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../bloc_navigation/navigation.dart';
 
 class ChatIAPage extends StatefulWidget implements NavigationStates {
@@ -23,6 +25,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
   bool chatCreated = false;
   bool hasError = false;
   File? _selectedImage;
+  User? user;
 
   final ChatService _chatService = ChatService();
 
@@ -30,8 +33,17 @@ class _ChatIAPageState extends State<ChatIAPage> {
 
   @override
   void initState() {
+    setPatient();
     super.initState();
     _scrollController = ScrollController();
+  }
+
+  Future<void> setPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('user')!;
+    setState(() {
+      user = User.fromJson(jsonDecode(userTemp));
+    });
   }
 
   Future<void> _sendMessage(String message) async {

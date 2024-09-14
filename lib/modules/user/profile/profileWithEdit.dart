@@ -1,7 +1,16 @@
+import 'dart:convert';
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:nutriapp/models/Patient.dart';
+import 'package:nutriapp/modules/user/home/home.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
+import 'package:nutriapp/services/patientServices.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui' as ui;
 
 class ProfileWithPage extends StatefulWidget with NavigationStates {
   const ProfileWithPage({Key? key}) : super(key: key);
@@ -11,6 +20,41 @@ class ProfileWithPage extends StatefulWidget with NavigationStates {
 }
 
 class _ProfileWithPageState extends State<ProfileWithPage> {
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+
+  //initstate
+  @override
+  void initState() {
+    fetchPatient();
+    super.initState();
+  }
+
+  //fetchPatient
+  Future<void> fetchPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('user')!;
+    setState(() {
+      patient = Patient
+          .fromJson(jsonDecode(userTemp));
+    });
+  }
+
+  //controllers dni controller with initial value of 123
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController edadController = TextEditingController();
   final TextEditingController estaturaController = TextEditingController();
@@ -26,6 +70,7 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
   bool verduras = false;
   bool frutas = false;
   bool bebidas = false;
+  String objetivo = "Ganar Musculo";
 
   void _showCardsPopUp() {
     showDialog(
@@ -43,10 +88,16 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
                 _buildGreenText("¿Cuál es tu objetivo a lograr?"),
                 SizedBox(height: 10),
                 Container(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: InkWell(
                       onTap: () {
-                        //añadir accion
+                        setState(() {
+                          objetivo = "Ganar Musculo";
+                        });
+                        Navigator.pop(context);
                       },
                       child: _buildCardButtom(
                           "Ganar Musculo",
@@ -55,10 +106,16 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
                 ),
                 SizedBox(height: 10),
                 Container(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: InkWell(
                       onTap: () {
-                        //añadir accion
+                        setState(() {
+                          objetivo = "Perder Grasa";
+                        });
+                        Navigator.pop(context);
                       },
                       child: _buildCardButtom(
                           "Perder Grasa",
@@ -67,10 +124,16 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
                 ),
                 SizedBox(height: 10),
                 Container(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   child: InkWell(
                       onTap: () {
-                        //añadir accion
+                        setState(() {
+                          objetivo = "Mantener Peso";
+                        });
+                        Navigator.pop(context);
                       },
                       child: _buildCardButtom(
                           "Mantener Peso",
@@ -91,151 +154,151 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  _buildGreenText("Comida favorita"),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Container(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      _buildGreenText("Comida favorita"),
+                      SizedBox(height: 10),
                       Row(
                         children: [
-                          Checkbox(
-                              value: carbohidratos,
-                              onChanged: (value) {
-                                setState(() {
-                                  carbohidratos = value!;
-                                });
-                              }),
-                          const Icon(Icons.cake),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: carbohidratos,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      carbohidratos = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.cake),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Carbohidratos'),
+                            ],
                           ),
-                          _buildGreen2Text('Carbohidratos'),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
                       Row(
                         children: [
-                          Checkbox(
-                              value: proteinas,
-                              onChanged: (value) {
-                                setState(() {
-                                  proteinas = value!;
-                                });
-                              }),
-                          const Icon(Icons.local_dining),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: proteinas,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      proteinas = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.local_dining),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Proteinas'),
+                            ],
                           ),
-                          _buildGreen2Text('Proteinas'),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
                       Row(
                         children: [
-                          Checkbox(
-                              value: grasas,
-                              onChanged: (value) {
-                                setState(() {
-                                  grasas = value!;
-                                });
-                              }),
-                          const Icon(Icons.fastfood),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: grasas,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      grasas = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.fastfood),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Grasas'),
+                            ],
                           ),
-                          _buildGreen2Text('Grasas'),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
                       Row(
                         children: [
-                          Checkbox(
-                              value: verduras,
-                              onChanged: (value) {
-                                setState(() {
-                                  verduras = value!;
-                                });
-                              }),
-                          const Icon(Icons.spa),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: verduras,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      verduras = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.spa),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Verduras'),
+                            ],
                           ),
-                          _buildGreen2Text('Verduras'),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
                       Row(
                         children: [
-                          Checkbox(
-                              value: frutas,
-                              onChanged: (value) {
-                                setState(() {
-                                  frutas = value!;
-                                });
-                              }),
-                          const Icon(Icons.apple),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: frutas,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      frutas = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.apple),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Frutas'),
+                            ],
                           ),
-                          _buildGreen2Text('Frutas'),
                         ],
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
                       Row(
                         children: [
-                          Checkbox(
-                              value: bebidas,
-                              onChanged: (value) {
-                                setState(() {
-                                  bebidas = value!;
-                                });
-                              }),
-                          const Icon(Icons.local_drink),
-                          const SizedBox(
-                            height: 0,
-                            width: 10,
+                          Row(
+                            children: [
+                              Checkbox(
+                                  value: bebidas,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      bebidas = value!;
+                                    });
+                                  }),
+                              const Icon(Icons.local_drink),
+                              const SizedBox(
+                                height: 0,
+                                width: 10,
+                              ),
+                              _buildGreen2Text('Bebidas'),
+                            ],
                           ),
-                          _buildGreen2Text('Bebidas'),
                         ],
                       ),
+                      SizedBox(height: 20),
+                      _buildNextButton("APLICAR"),
+                      SizedBox(height: 10),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  _buildNextButton("APLICAR"),
-                  SizedBox(height: 10),
-                ],
-              ),
-            ),
-          );
-        });
+                ),
+              );
+            });
       },
     );
   }
@@ -341,7 +404,10 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
               const SizedBox(height: 10),
               _buildBlackSubTitle("Objetivo:"),
               Container(
-                width: MediaQuery.of(context).size.width,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width,
                 child: InkWell(
                   onTap: () {
                     _showCardsPopUp();
@@ -363,10 +429,10 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildBlackSubTitle("Ganar Musculo"),
+                                    _buildBlackSubTitle(objetivo),
                                     SizedBox(height: 8),
                                     _buildBlackText(
-                                        "Pon tus musculos fuertes y gana fuerza"),
+                                        Utils.setObjetive(objetivo)),
                                   ],
                                 ),
                               ),
@@ -392,7 +458,10 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
               const SizedBox(height: 15),
               _buildBlackSubTitle("Comidas favoritas:"),
               Container(
-                width: MediaQuery.of(context).size.width,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width,
                 child: InkWell(
                   onTap: () {
                     _showOptionsPopUp();
@@ -506,16 +575,35 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
   Widget _buildNextButton(String textbuttom) {
     return ElevatedButton(
       onPressed: () {
-        // Aquí debes agregar la lógica para el inicio de sesión
+        PatientServices().updatePatient(
+            new Patient(id: patient.id,
+                name: nombreController.text,
+                lastName: patient.lastName,
+                email: patient.email,
+                phone: patient.phone,
+                address: patient.address,
+                birthday: patient.birthday,
+                dni: patient.dni,
+                code: patient.code,
+                height: double.parse(estaturaController.text),
+                weight: double.parse(pesoController.text),
+                imageUrl: patient.imageUrl,
+                preferences: patient.preferences,
+                allergies: [afeccionesController.text],
+                objective: objetivo));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
       },
       style: ElevatedButton.styleFrom(
-        foregroundColor: verdeMain, backgroundColor: Colors.green,
+        foregroundColor: verdeMain,
+        backgroundColor: Colors.green,
         shape: const StadiumBorder(),
         elevation: 5,
         shadowColor:
-            verdeMain, // Reemplaza con tu variable de color 'verdeMain'
-        minimumSize:
-            const Size.fromHeight(60), // Texto y otros elementos del botón
+        verdeMain,
+        // Reemplaza con tu variable de color 'verdeMain'
+        minimumSize: const ui.Size.fromHeight(60), // Texto y otros elementos del botón, // Texto y otros elementos del botón
       ),
       child: Text(
         textbuttom,
@@ -616,9 +704,11 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
   Widget _buildAutosizeText(TextEditingController controller, String text) {
     return TextField(
       controller: controller,
-      cursorColor: Colors.green, // Cambia el color del cursor a verde
+      cursorColor: Colors.green,
+      // Cambia el color del cursor a verde
       style:
-          TextStyle(color: Colors.black), // Cambia el color del texto a verde
+      TextStyle(color: Colors.black),
+      // Cambia el color del texto a verde
       minLines: 3,
       maxLines: null,
       decoration: InputDecoration(
@@ -636,7 +726,8 @@ class _ProfileWithPageState extends State<ProfileWithPage> {
         ),
         hintText: text,
         hintStyle: const TextStyle(
-            color: Colors.grey), // Cambia el color del hintText a gris
+            color: Colors.grey),
+        // Cambia el color del hintText a gris
         // Cambia el color del label (si lo estás usando) cuando está flotando
         floatingLabelStyle: const TextStyle(color: Colors.green),
       ),

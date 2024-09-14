@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
 import 'package:nutriapp/themes/color.dart';
 
 import 'package:nutriapp/modules/user/profile/profileWithEdit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Patient.dart';
 
 class ProfilePatientPage extends StatefulWidget {
   const ProfilePatientPage({Key? key}) : super(key: key);
@@ -12,6 +18,38 @@ class ProfilePatientPage extends StatefulWidget {
 }
 
 class _ProfilePatientPageState extends State<ProfilePatientPage> {
+
+  Patient patient = new Patient(
+      id: 0,
+      name: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      dni: "",
+      code: "",
+      height: 0,
+      weight: 0,
+      imageUrl: "",
+      preferences: [],
+      allergies: [],
+      objective: "");
+
+  @override
+  void initState() {
+    setPatient();
+    super.initState();
+  }
+
+  Future<void> setPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String patientTmp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(patientTmp));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +81,7 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Nombre:")),
-                    Expanded(flex: 2, child: _buildBlackText("Dan Mitchel")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.name + " " + patient.lastName)),
                   ],
                 ),
               ),
@@ -52,7 +90,7 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Edad:")),
-                    Expanded(flex: 2, child: _buildBlackText("29 años")),
+                    Expanded(flex: 2, child: _buildBlackText(Utils.calculateAge(patient.birthday).toString() + " años")),
                   ],
                 ),
               ),
@@ -61,7 +99,7 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Estatura:")),
-                    Expanded(flex: 2, child: _buildBlackText("152 cm")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.height.toString() + " cm")),
                   ],
                 ),
               ),
@@ -70,7 +108,7 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                 child: Row(
                   children: [
                     Expanded(flex: 2, child: _buildBlackSubTitle("Peso:")),
-                    Expanded(flex: 2, child: _buildBlackText("70 KG")),
+                    Expanded(flex: 2, child: _buildBlackText(patient.weight.toString() + " kg")),
                   ],
                 ),
               ),
@@ -94,13 +132,14 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                   },
                   child: _buildCardButtom(
                       "Ganar Musculo",
-                      "Pon tus musculos fuertes y gana fuerza",
+                      patient.objective,
                       'assets/ganar_musculo.png'),
                 ),
               ),
               const SizedBox(height: 15),
               _buildBlackSubTitle("Afecciones:"),
-              _buildBlackText("Alérgico a los mariscos"),
+              for (var allergy in patient.allergies)
+                _buildBlackText(allergy),
               const SizedBox(height: 15),
               _buildBlackSubTitle("Comidas favoritas:"),
               Container(
@@ -126,6 +165,8 @@ class _ProfilePatientPageState extends State<ProfilePatientPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // for(var aliments in patient.nutritionalHistory!)
+                                    //   _buildBlackText(aliments.name),
                                     _buildBlackText("Proteínas"),
                                     _buildBlackText("Bebidas"),
                                   ],

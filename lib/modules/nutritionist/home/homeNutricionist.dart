@@ -8,9 +8,13 @@ import 'package:nutriapp/modules/nutritionist/informaton_patient/chatsSavedPatie
 import 'package:nutriapp/modules/nutritionist/informaton_patient/favoriteFoodPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/graphicsPatient.dart';
 import 'package:nutriapp/modules/nutritionist/informaton_patient/profilePatient.dart';
+import 'package:nutriapp/modules/utils/Utils.dart';
 import 'package:nutriapp/services/nutritionistServices.dart';
+import 'package:nutriapp/services/patientServices.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Patient.dart';
 
 class HomeNutricionistPage extends StatefulWidget
     with NavigationNutricionistStates {
@@ -21,9 +25,9 @@ class HomeNutricionistPage extends StatefulWidget
 }
 
 class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
-
   User? user;
-  Nutritionist nutritionist = new Nutritionist(id: 0,
+  Nutritionist nutritionist = new Nutritionist(
+      id: 0,
       name: "",
       lastName: "",
       email: "",
@@ -32,11 +36,12 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
       birthday: "",
       licenceNumber: "",
       specialty: "");
+  List<Patient> patients = [];
 
   @override
   void initState() {
-    print("entrando a home");
     fetchNutritionist();
+    fetchPatients();
     super.initState();
   }
 
@@ -51,14 +56,28 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
         print("No nutritionist found in SharedPreferences");
       }
     });
-
-    print(user);
-
-    nutritionist = (await NutritionistServices().fetchNutritionistById(user!.id))!;
-
-    print("nutritinistName" + nutritionist.name);
+    nutritionist =
+        (await NutritionistServices().fetchNutritionistById(user!.id))!;
+    // prefs.setString("user", jsonEncode(nutritionist));
   }
 
+  Future<void> fetchPatients() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userTemp = prefs.getString('user');
+    setState(() {
+      if (userTemp != null) {
+        user = User.fromJson(jsonDecode(userTemp) as Map<String, dynamic>);
+      } else {
+        print("No nutritionist found in SharedPreferences");
+      }
+    });
+    print("user" + user!.id.toString());
+    List<Patient> fetchPatients =
+        await PatientServices().fetchPatientsByNutritionistId(user!.id);
+    setState(() {
+      patients = fetchPatients;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +96,11 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
               _buildPatientInfo(),
               const SizedBox(height: 20),
               _buildGreenText("Lista de usuarios"),
-              _buildUser("Dan Mitchel", "UD93K)=/"),
-              _buildUser("Jorge Luna", "UD123)=/"),
+              //build user with patients list
+              for (var patient in patients) _buildUser(patient),
+
+              // _buildUser("Dan Mitchel", "UD93K)=/"),
+              // _buildUser("Jorge Luna", "UD123)=/"),
             ],
           ),
         ),
@@ -110,9 +132,10 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBlackText("Nombre: Melissa Suarez"),
+                _buildBlackText("Nombre: " + nutritionist.name),
                 const SizedBox(height: 8),
-                _buildBlackText("Edad: 31 años"),
+                _buildBlackText(
+                    "Edad: ${Utils.calculateAge(nutritionist.birthday)} años"),
               ],
             ),
           ),
@@ -129,7 +152,7 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
     );
   }
 
-  Widget _buildUser(String name, String code) {
+  Widget _buildUser(Patient patient) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
@@ -137,25 +160,29 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
           Row(
             children: [
               _buildBlackTitle("Nombre: "),
-              _buildBlackTitle(name),
+              _buildBlackTitle(patient.name),
             ],
           ),
           Row(
             children: [
               _buildBlackTitle("Código: "),
-              _buildBlackTitle(code),
+              _buildBlackTitle(patient.code),
             ],
           ),
           const SizedBox(height: 5),
-          _buildCard(),
+          _buildCard(patient),
         ],
       ),
     );
   }
 
-  Widget _buildCard() {
+  Widget _buildCard(Patient patient) {
     double sizeIcon = 40;
     double sizeText = 15;
+    //save patientId in sharedPreferes
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString("patient", jsonEncode(patient));
+    });
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.0),

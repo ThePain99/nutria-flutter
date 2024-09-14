@@ -1,3 +1,5 @@
+import 'Aliments.dart';
+
 class Patient {
   final int id;
   final String name;
@@ -14,6 +16,7 @@ class Patient {
   final List<String> preferences;
   final List<String> allergies;
   final String objective;
+  // final Aliments? nutritionalHistory;
 
   Patient({
     required this.id,
@@ -31,6 +34,7 @@ class Patient {
     required this.preferences,
     required this.allergies,
     required this.objective,
+    // this.nutritionalHistory,
   });
 
   // Método para convertir de JSON a Patient
@@ -51,6 +55,9 @@ class Patient {
       preferences: List<String>.from(json['preferences']),
       allergies: List<String>.from(json['allergies']),
       objective: json['objective'],
+      // nutritionalHistory: json['nutritionalHistory'] != null
+      //     ? Aliments.fromJson(json['nutritionalHistory'])
+      //     : null,
     );
   }
 
@@ -72,6 +79,7 @@ class Patient {
       'preferences': preferences,
       'allergies': allergies,
       'objective': objective,
+      // 'nutritionalHistory': nutritionalHistory?.toJson(),
     };
   }
 }
