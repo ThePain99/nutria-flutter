@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/variables.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../models/Patient.dart';
 
 class ConversationPage extends StatefulWidget {
   const ConversationPage({Key? key}) : super(key: key);
@@ -17,13 +20,24 @@ class _ConversationPageState extends State<ConversationPage> {
   bool _isLoading = false;
   int? chatId;
   int chatCounter = 1; // Esta variable se actualizará correctamente.
+  Patient? patient;
 
   final ChatService _chatService = ChatService();
 
   @override
   void initState() {
+    setPatient();
     super.initState();
     _initializeChat(); // Inicia el chat de manera secuencial.
+  }
+
+  //set patient
+  Future<void> setPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(userTemp));
+    });
   }
 
   Future<void> _initializeChat() async {
@@ -32,13 +46,13 @@ class _ConversationPageState extends State<ConversationPage> {
     });
 
     // Obtén la cantidad de chats existentes para el paciente
-    List<dynamic> existingChats = await _chatService.getChatsByPatientId(Environment.patientId);
+    List<dynamic> existingChats = await _chatService.getChatsByPatientId(patient!.id);
 
     // Determina el número secuencial basado en la cantidad de chats existentes
     chatCounter = existingChats.length + 1;
 
     final chatName = 'Conversación $chatCounter';
-    chatId = await _chatService.createChat(chatName, Environment.patientId);
+    chatId = await _chatService.createChat(chatName, patient!.id);
 
     if (chatId != null) {
       debugPrint('Nuevo chat creado con ID: $chatId');

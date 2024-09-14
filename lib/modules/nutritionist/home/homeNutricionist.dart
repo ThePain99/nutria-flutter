@@ -153,6 +153,7 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
   }
 
   Widget _buildUser(Patient patient) {
+    print(patient.name);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Column(
@@ -180,9 +181,6 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
     double sizeIcon = 40;
     double sizeText = 15;
     //save patientId in sharedPreferes
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setString("patient", jsonEncode(patient));
-    });
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.0),
@@ -198,6 +196,9 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
             Expanded(
               child: InkWell(
                 onTap: () {
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString("patient", jsonEncode(patient));
+                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -240,6 +241,9 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
             Expanded(
               child: InkWell(
                 onTap: () {
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString("patient", jsonEncode(patient));
+                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -261,6 +265,9 @@ class _HomeNutricionistPageState extends State<HomeNutricionistPage> {
             Expanded(
               child: InkWell(
                 onTap: () {
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString("patient", jsonEncode(patient));
+                  });
                   Navigator.push(
                     context,
                     MaterialPageRoute(

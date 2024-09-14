@@ -1,10 +1,14 @@
 import 'dart:convert'; // Import necesario para utf8
 import 'package:flutter/material.dart';
+import 'package:nutriapp/models/Patient.dart';
+import 'package:nutriapp/models/User.dart';
 import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/chats/chatsSavedHistorial.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../variables.dart';
+import '../../utils/Utils.dart';
 import '../bloc_navigation/navigation.dart';
 
 class ChatSavedPage extends StatefulWidget with NavigationStates {
@@ -17,11 +21,21 @@ class ChatSavedPage extends StatefulWidget with NavigationStates {
 class _ChatSavedPageState extends State<ChatSavedPage> {
   late Future<List<dynamic>> _chatsFuture;
   final ChatService _chatService = ChatService();
+  Patient? patient;
 
   @override
   void initState() {
+    setPatient();
     super.initState();
-    _chatsFuture = _chatService.getChatsByPatientId(Environment.patientId);
+  }
+
+  Future<void> setPatient() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userTemp = prefs.getString('patient')!;
+    setState(() {
+      patient = Patient.fromJson(jsonDecode(userTemp));
+      _chatsFuture = _chatService.getChatsByPatientId(patient!.id);
+    });
   }
 
   @override
@@ -113,9 +127,11 @@ class _ChatSavedPageState extends State<ChatSavedPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBlackText("Nombre: Dan Mitchel"),
+                _buildBlackText("Nombre: " + patient!.name),
                 const SizedBox(height: 8),
-                _buildBlackText("Edad: 29 años"),
+                _buildBlackText("Edad: " +
+                    Utils.calculateAge(patient!.birthday) +
+                    " años"),
               ],
             ),
           ),

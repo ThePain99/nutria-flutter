@@ -75,11 +75,11 @@ class _ChatIAPageState extends State<ChatIAPage> {
 
   Future<bool> _createNewChat() async {
     try {
-      List<dynamic> existingChats = await _chatService.getChatsByPatientId(Environment.patientId);
+      List<dynamic> existingChats = await _chatService.getChatsByPatientId(user!.id);
       chatCounter = existingChats.length + 1;
 
       final chatName = 'Conversación $chatCounter';
-      chatId = await _chatService.createChat(chatName, Environment.patientId);
+      chatId = await _chatService.createChat(chatName, user!.id);
 
       if (chatId != null) {
         return true;
