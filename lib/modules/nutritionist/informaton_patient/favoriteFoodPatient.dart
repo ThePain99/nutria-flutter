@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../models/Aliments.dart';
 import '../../../models/Patient.dart';
+import '../../utils/Utils.dart';
 
 class FavoriteFoodPatientPage extends StatefulWidget {
   const FavoriteFoodPatientPage({Key? key}) : super(key: key);
@@ -96,9 +97,11 @@ class _FavoriteFoodPatientPageState extends State<FavoriteFoodPatientPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildBlackText("Nombre: Dan Mitchel"),
+                            _buildBlackText("Nombre: " + patient.name),
                             SizedBox(height: 8),
-                            _buildBlackText("Edad: 29 años"),
+                            _buildBlackText("Edad: " +
+                                Utils.calculateAge(patient.birthday) +
+                                " años"),
                           ],
                         ),
                       ),

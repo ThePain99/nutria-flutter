@@ -117,7 +117,7 @@ class _FavoritePageState extends State<FavoritePage> {
               ),
               const SizedBox(height: 20),
               _buildGreenText("Comidas favoritas"),
-              _buildBlackTitle("Desayuno"),
+              _buildBlackTitle("Alimentos"),
               for (var aliment in aliments) RecipeTile(aliment: aliment),
               // _buildBlackTitle("Almuerzo"),
               // RecipeTile(),

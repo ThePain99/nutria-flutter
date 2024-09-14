@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
               buildUserProfile(),
               const SizedBox(height: 20),
-              buildMenuSection("Menú del día", "Desayuno"),
+              buildMenuSection("Menú del día", "Alimentos"),
             ],
           ),
         ),

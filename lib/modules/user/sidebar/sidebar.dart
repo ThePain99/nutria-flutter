@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nutriapp/modules/login_and_register/loginPage.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:nutriapp/modules/user/sidebar/menuItem.dart';
 import 'package:nutriapp/modules/user/bloc_navigation/navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -183,8 +185,13 @@ class _SideBarState extends State<SideBar>
           title: "Salir",
           onTap: () {
             onIconPressed();
-            BlocProvider.of<NavigationBloc>(context)
-                .add(NavigationEvents.LogoutClickedEvent);
+            //clean all shared preferences
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.clear();
+            });
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
 
           },
         ),
