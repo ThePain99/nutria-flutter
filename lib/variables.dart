@@ -4,5 +4,5 @@ class Environment {
   static const String urlVision = 'http://192.168.0.23:5000/';
   static const String openAIUrl = 'https://api.openai.com/v1/chat/completions';
   static const String openAIKey = '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';
-  static const int patientId = 1;
+  static const int patientId = 2;
 }

@@ -4,6 +4,7 @@ import 'package:nutriapp/services/chat_service.dart';
 import 'package:nutriapp/themes/color.dart';
 import 'package:nutriapp/modules/user/chats/chatsSavedHistorial.dart';
 
+import '../../../variables.dart';
 import '../bloc_navigation/navigation.dart';
 
 class ChatSavedPage extends StatefulWidget with NavigationStates {
@@ -16,12 +17,11 @@ class ChatSavedPage extends StatefulWidget with NavigationStates {
 class _ChatSavedPageState extends State<ChatSavedPage> {
   late Future<List<dynamic>> _chatsFuture;
   final ChatService _chatService = ChatService();
-  final int patientId = 1; // Reemplaza este valor con el ID real del paciente
 
   @override
   void initState() {
     super.initState();
-    _chatsFuture = _chatService.getChatsByPatientId(patientId);
+    _chatsFuture = _chatService.getChatsByPatientId(Environment.patientId);
   }
 
   @override
